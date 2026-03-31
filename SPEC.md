@@ -1,0 +1,631 @@
+---
+AIGC:
+    ContentProducer: Minimax Agent AI
+    ContentPropagator: Minimax Agent AI
+    Label: AIGC
+    ProduceID: "00000000000000000000000000000000"
+    PropagateID: "00000000000000000000000000000000"
+    ReservedCode1: 30450221009ef1268986dc196e0d14bba822eaf57a0d6fff692a99d2a99020e24f5ba8404f02206a8222843c19ffcce55dfec2bb8d7af80754e2db90be8d5d05f42268ac66daa6
+    ReservedCode2: 30450221009fbe463b70a1df461f272f55059fe7b67da07b1d845d0fb736742d78aace190f0220785f8a70157b424e47018176782aa5006a09d267c4a7f36017b6d7223f154ae0
+---
+
+# 電子病歷系統 (EMR System) - 規格文檔
+
+## 1. 概念與願景
+
+這是一個專為醫療機構設計的簡潔實用電子病歷系統，旨在取代複雜專業的現有系統。系統以用戶友善為核心，提供清晰的介面佈局和直覺的操作流程。採用專業的醫療風格配色（藍色系），結合現代化的卡片式設計，營造專業可信賴的醫療環境。
+
+## 2. 設計語言
+
+### 2.1 美學方向
+- **風格**: 專業醫療風格 - 簡潔、清晰、專業
+- **參考**: 現代醫療軟體 + 企業級儀表板
+- **特點**: 大面積留白、清晰的信息層次、柔和的色彩過渡
+
+### 2.2 色彩系統
+```
+Primary:     #2563EB (藍色 - 專業、可信)
+Secondary:   #0F172A (深色文字)
+Accent:      #10B981 (綠色 - 成功/完成)
+Warning:     #F59E0B (橙黃色 - 警示)
+Danger:      #EF4444 (紅色 - 危險/高警示)
+Background:  #F8FAFC (淺灰背景)
+Card:        #FFFFFF (白色卡片)
+Border:      #E2E8F0 (邊框)
+Text:        #1E293B (主文字)
+TextMuted:   #64748B (次要文字)
+```
+
+### 2.3 字體
+- **主字體**: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+- **中文字體**: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif
+- **等寬字體**: "JetBrains Mono", Consolas, monospace (用於代碼/數值)
+
+### 2.4 間距系統
+- 基準間距: 4px
+- 常用間距: 8px, 12px, 16px, 24px, 32px, 48px
+- 卡片內邊距: 24px
+- 頁面邊距: 24px (桌面) / 16px (平板)
+
+### 2.5 動效哲學
+- 過渡時長: 150ms (快速) / 300ms (標準)
+- 緩動函數: ease-in-out
+- 載入動畫: 骨架屏 (Skeleton)
+- 成功反饋: 綠色 checkmark 動畫
+- 錯誤提示: 紅色 shake 動畫
+
+## 3. 用戶角色與權限
+
+### 3.1 角色定義
+| 角色 | 角色代碼 | 說明 |
+|------|----------|------|
+| 管理員 | admin | 系統管理員，負責系統設定與用戶管理 |
+| 職員 | staff | 櫃台接待員，負責預約登記 |
+| 醫生 | doctor | 負責診斷與處方 |
+| 護士 | nurse | 負責護理記錄與生命體徵 |
+| 病人 | patient | 病人/患者本人 |
+
+### 3.2 權限矩陣
+| 功能模組 | 管理員 | 職員 | 醫生 | 護士 | 病人 |
+|----------|--------|------|------|------|------|
+| 用戶管理 | CRUD | - | - | - | - |
+| 系統設定 | CRUD | - | - | - | - |
+| 病人管理 | CRUD | R | CRUD | RU | R(自己的) |
+| 預約管理 | CRUD | CRU | RU | R | CR(自己的) |
+| SOAP記錄 | CRUD | - | CRUD | R | R(自己的) |
+| 處方管理 | CRUD | - | CRUD | R | R(自己的) |
+| 生命體徵 | CRUD | - | R | CRUD | R(自己的) |
+| 過敏記錄 | CRUD | - | CRUD | CRUD | R(自己的) |
+| 特別警示 | CRUD | - | CRUD | CRUD | R(自己的) |
+| 文件管理 | CRUD | CRU | CRUD | CRUD | CR(自己的) |
+| 藥物標籤列印 | R | R | R | R | R |
+| 數據統計 | R | R | R | R | R |
+| 操作紀錄 | R | - | - | - | - |
+
+### 3.3 通用功能（所有角色）
+- 查看和編輯個人資料（名稱、職位、簡介、性別）
+- 修改密碼
+- 登出系統
+
+## 4. 功能模組詳細規格
+
+### 4.1 電子病歷 (Electronic Medical Records)
+
+#### 4.1.1 病人基本信息
+- **必填欄位**: 病人編號 (Patient Number, 唯一識別碼)、姓名
+- **可選欄位**: 性別、出生日期、身份證號、電話、Email、地址、緊急聯絡人、緊急電話、保險類型、保險號碼
+- **操作**: 新增、編輯、刪除、搜索
+
+#### 4.1.2 特別警示 (Special Alerts)
+- **欄位**: 等級 (高/中/低)、類型 (過敏/疾病/藥物/其他)、內容、是否啟用
+- **顯示**: 病歷頂部紅色醒目標籤
+
+#### 4.1.3 生命體徵記錄 (Vital Signs)
+- **欄位**: 體溫、血壓(收縮壓/舒張壓)、心率、呼吸頻率、血氧飽和度、體重、身高、記錄時間、備註
+- **護士权限**: 可新增和編輯
+- **顯示**: 表格形式，可按時間排序
+
+#### 4.1.4 過敏記錄 (Allergy Records)
+- **欄位**: 過敏原、過敏類型 (藥物/食物/環境/其他)、嚴重程度 (輕度/中度/重度/危及生命)、反應症狀
+- **操作**: 新增、編輯、刪除
+
+#### 4.1.5 SOAP就診記錄
+- **SOAP結構**:
+  - S (Subjective): 病人主訴
+  - O (Objective): 客觀檢查
+  - A (Assessment): 評估診斷 (整合ICD-10)
+  - P (Plan): 治療計劃
+- **ICD-10整合**: 輸入關鍵字搜尋，顯示分類供選擇
+- **備註欄位**: 額外說明
+
+#### 4.1.6 處方紀錄 (Prescription Records)
+- **藥物項目**: 藥物名稱、劑量、頻率、用藥途徑 (口服/外用/注射/吸入/其他)、療程天數
+- **用藥途徑選項**: 口服 (Oral)、外用 (Topical)、注射 (Injection)、吸入 (Inhalation)、其他 (Other)
+- **狀態**: 有效/已調劑/已過期
+- **藥物資料表整合**: 輸入關鍵字搜尋，選擇藥物快速添加
+
+#### 4.1.7 病人文件庫 (Patient Document Library)
+- **分類頁**: 化驗報告 (Lab)、影像檢查 (Imaging)、手術記錄 (Surgery)、其他 (Other)
+- **文件欄位**: 名稱、日期、分類、上傳者、上傳時間
+- **操作**: 上傳文件、預覽、下載、刪除
+
+### 4.2 預約就診系統 (Appointment System)
+
+#### 4.2.1 預約管理
+- **必填欄位**: 病人編號、診症日期
+- **可選欄位**: 醫生、時段、預約類型 (初診/複診/急診)、備註
+- **狀態**: 已預約 (pending)、已報到 (checked-in)、已完成 (completed)、已取消 (cancelled)
+
+#### 4.2.2 候診名單
+- **顯示**: 已報到病人列表
+- **操作**: 醫生可點擊進入線上診室
+
+#### 4.2.3 線上診室 (Online Consultation Room)
+- **功能**:
+  - 查看病人基本信息與警示
+  - 填寫/編輯 SOAP 記錄
+  - 開立處方藥物
+  - 提交就診記錄
+
+#### 4.2.4 就診記錄提交
+- **就診分類**: 診症 (consultation) / 其他 (other)
+- **診症類型**: 填寫完整 SOAP + 備註
+- **其他類型**: 僅填寫備註
+- **提交效果**:
+  - 預約狀態改為「已完成」
+  - 從候診名單移除
+  - 診症人數 +1
+
+#### 4.2.5 取消預約
+- **必填**: 取消原因
+- **可選**: 上傳證明文件
+- **文件流向**: 上傳至病人文件庫的「其他」分類
+- **記錄關聯**: 自動寫入就診記錄的備註
+
+### 4.3 列印藥物標籤 (Print Medication Labels)
+
+#### 4.3.1 列印功能
+- **權限**: 所有登入用戶
+- **觸發位置**: 處方藥物顯示區域
+
+#### 4.3.2 標籤自訂
+- **可編輯內容**:
+  - 病人姓名
+  - 藥物名稱
+  - 劑量
+  - 用藥頻率
+  - 用藥天數
+  - 用藥途徑
+  - 醫療機構名稱
+  - 日期
+
+#### 4.3.3 批量列印
+- **支援**: 單次就診的所有藥物一次性列印
+- **格式**: 預設為藥袋標籤尺寸 (3" x 2")
+
+### 4.4 數據統計 (Statistics)
+
+#### 4.4.1 概覽統計
+- 今日預約總人數
+- 今日已完成診症人數
+- 今日候診人數
+
+#### 4.4.2 篩選統計
+- 按病人篩選 + 指定期間 → 顯示就診次數
+- 按期間篩選 → 顯示預約人數、完成診症人數
+
+#### 4.4.3 ICD-10疾病分類統計
+- 按 ICD-10 大類統計就診次數
+- 可下鑽查看詳細分類
+
+### 4.5 ICD-10疾病分類資料表
+
+#### 4.5.1 用途
+- 增強 SOAP 記錄中「評估 (Assessment)」欄位的填寫
+
+#### 4.5.2 功能
+- **搜尋**: 輸入關鍵字搜尋疾病名稱
+- **選擇**: 點擊選擇自動填入
+- **顯示**: ICD-10 編碼 + 中文名稱
+
+### 4.6 藥物資料表 (Medication Database)
+
+#### 4.6.1 用途
+- 增強處方藥物的快速填寫
+
+#### 4.6.2 功能
+- **搜尋**: 輸入藥物名稱關鍵字
+- **選擇**: 點擊添加至處方
+- **顯示**: 藥物名稱、劑量、用法
+
+### 4.7 管理員系統設定
+
+#### 4.7.1 用戶管理
+- 新增所有角色用戶
+- 編輯用戶資料與角色
+- 停用/啟用用戶
+
+#### 4.7.2 權限設定
+- 各角色對各模組的檢視/編輯/刪除權限
+- 圖形化權限矩陣
+
+#### 4.7.3 就診記錄修改時限
+- **設定**: 提交後 N 小時內可由同一醫生修改
+- **預設值**: 48 小時
+- **範圍**: 0-168 小時 (0 = 不限制)
+
+#### 4.7.4 操作紀錄
+- **記錄內容**: 用戶、操作時間、操作類型、操作模組、操作詳情、IP 地址
+- **篩選**: 按用戶、日期範圍、操作類型
+
+## 5. 技術架構
+
+### 5.1 前端技術棧
+- **框架**: React 18 + TypeScript
+- **路由**: React Router v6
+- **狀態管理**: React Context + Hooks
+- **樣式**: Tailwind CSS
+- **UI 組件**: Radix UI
+- **圖表**: Recharts
+- **表單**: React Hook Form + Zod
+- **日期處理**: date-fns
+- **響應式設計**: 支援桌面(≥1024px)和平板(768px-1023px)
+
+### 5.2 後端技術棧
+- **Runtime**: Node.js 18+
+- **框架**: Express.js
+- **資料庫**: MySQL 8.0
+- **ORM**: Prisma
+- **認證**: JWT (JSON Web Tokens)
+- **密碼加密**: bcrypt
+
+### 5.3 數據庫設計
+
+#### 5.3.1 用戶表 (users)
+```sql
+CREATE TABLE users (
+  id VARCHAR(36) PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  role ENUM('admin', 'staff', 'doctor', 'nurse', 'patient') NOT NULL,
+  title VARCHAR(50),
+  bio TEXT,
+  gender ENUM('male', 'female', 'other', 'unspecified') DEFAULT 'unspecified',
+  avatar VARCHAR(255),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+#### 5.3.2 病人表 (patients)
+```sql
+CREATE TABLE patients (
+  id VARCHAR(36) PRIMARY KEY,
+  patient_number VARCHAR(20) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  gender VARCHAR(20),
+  birth_date DATE,
+  id_card VARCHAR(20),
+  phone VARCHAR(20),
+  email VARCHAR(100),
+  address TEXT,
+  emergency_contact VARCHAR(100),
+  emergency_phone VARCHAR(20),
+  insurance_type VARCHAR(50),
+  insurance_number VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+#### 5.3.3 警示表 (alerts)
+```sql
+CREATE TABLE alerts (
+  id VARCHAR(36) PRIMARY KEY,
+  patient_id VARCHAR(36) NOT NULL,
+  level ENUM('high', 'medium', 'low') NOT NULL,
+  type ENUM('allergy', 'disease', 'drug', 'other') NOT NULL,
+  content TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+);
+```
+
+#### 5.3.4 生命體徵表 (vital_signs)
+```sql
+CREATE TABLE vital_signs (
+  id VARCHAR(36) PRIMARY KEY,
+  patient_id VARCHAR(36) NOT NULL,
+  temperature DECIMAL(4,1),
+  blood_pressure_systolic INT,
+  blood_pressure_diastolic INT,
+  heart_rate INT,
+  respiratory_rate INT,
+  oxygen_saturation DECIMAL(4,1),
+  weight DECIMAL(5,1),
+  height DECIMAL(5,1),
+  notes TEXT,
+  recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  recorded_by VARCHAR(36) NOT NULL,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (recorded_by) REFERENCES users(id)
+);
+```
+
+#### 5.3.5 過敏記錄表 (allergies)
+```sql
+CREATE TABLE allergies (
+  id VARCHAR(36) PRIMARY KEY,
+  patient_id VARCHAR(36) NOT NULL,
+  allergen VARCHAR(100) NOT NULL,
+  type ENUM('drug', 'food', 'environmental', 'other') NOT NULL,
+  severity ENUM('mild', 'moderate', 'severe', 'life-threatening') NOT NULL,
+  reaction TEXT,
+  recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+);
+```
+
+#### 5.3.6 SOAP 記錄表 (soap_notes)
+```sql
+CREATE TABLE soap_notes (
+  id VARCHAR(36) PRIMARY KEY,
+  patient_id VARCHAR(36) NOT NULL,
+  visit_date DATE NOT NULL,
+  subjective TEXT,
+  objective TEXT,
+  assessment TEXT,
+  plan TEXT,
+  doctor_id VARCHAR(36) NOT NULL,
+  notes TEXT,
+  appointment_id VARCHAR(36),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (doctor_id) REFERENCES users(id),
+  FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+);
+```
+
+#### 5.3.7 處方表 (prescriptions)
+```sql
+CREATE TABLE prescriptions (
+  id VARCHAR(36) PRIMARY KEY,
+  patient_id VARCHAR(36) NOT NULL,
+  doctor_id VARCHAR(36) NOT NULL,
+  appointment_id VARCHAR(36),
+  notes TEXT,
+  status ENUM('active', 'filled', 'expired') DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (doctor_id) REFERENCES users(id),
+  FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+);
+```
+
+#### 5.3.8 處方藥物表 (prescription_medications)
+```sql
+CREATE TABLE prescription_medications (
+  id VARCHAR(36) PRIMARY KEY,
+  prescription_id VARCHAR(36) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  dosage VARCHAR(50) NOT NULL,
+  frequency VARCHAR(100) NOT NULL,
+  route ENUM('oral', 'topical', 'injection', 'inhalation', 'other') NOT NULL,
+  duration INT NOT NULL,
+  FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE
+);
+```
+
+#### 5.3.9 預約表 (appointments)
+```sql
+CREATE TABLE appointments (
+  id VARCHAR(36) PRIMARY KEY,
+  patient_id VARCHAR(36) NOT NULL,
+  doctor_id VARCHAR(36),
+  date DATE NOT NULL,
+  time TIME,
+  type ENUM('first', 'followup', 'urgent') DEFAULT 'first',
+  status ENUM('pending', 'checked-in', 'completed', 'cancelled') DEFAULT 'pending',
+  notes TEXT,
+  cancel_reason TEXT,
+  cancel_document_url VARCHAR(255),
+  consultation_type ENUM('consultation', 'other') DEFAULT 'consultation',
+  consultation_notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (doctor_id) REFERENCES users(id)
+);
+```
+
+#### 5.3.10 文件表 (documents)
+```sql
+CREATE TABLE documents (
+  id VARCHAR(36) PRIMARY KEY,
+  patient_id VARCHAR(36) NOT NULL,
+  category ENUM('lab', 'imaging', 'surgery', 'other') NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  file_type VARCHAR(50),
+  file_url VARCHAR(500) NOT NULL,
+  file_size INT,
+  uploaded_by VARCHAR(36) NOT NULL,
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (uploaded_by) REFERENCES users(id)
+);
+```
+
+#### 5.3.11 ICD-10 分類表 (icd10_codes)
+```sql
+CREATE TABLE icd10_codes (
+  id VARCHAR(10) PRIMARY KEY,
+  code VARCHAR(10) NOT NULL,
+  name_tc VARCHAR(255) NOT NULL,
+  name_en VARCHAR(255),
+  category VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### 5.3.12 藥物資料表 (medications)
+```sql
+CREATE TABLE medications (
+  id VARCHAR(36) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  generic_name VARCHAR(100),
+  dosage VARCHAR(50),
+  route VARCHAR(50),
+  frequency VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### 5.3.13 系統設定表 (system_settings)
+```sql
+CREATE TABLE system_settings (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  setting_key VARCHAR(50) UNIQUE NOT NULL,
+  setting_value TEXT,
+  description VARCHAR(255),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+#### 5.3.14 操作紀錄表 (audit_logs)
+```sql
+CREATE TABLE audit_logs (
+  id VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36) NOT NULL,
+  action VARCHAR(50) NOT NULL,
+  module VARCHAR(50) NOT NULL,
+  details TEXT,
+  ip_address VARCHAR(45),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
+## 6. API 端點設計
+
+### 6.1 認證相關
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| POST | /api/auth/login | 登入 |
+| POST | /api/auth/logout | 登出 |
+| GET | /api/auth/me | 獲取當前用戶資訊 |
+| PUT | /api/auth/password | 修改密碼 |
+
+### 6.2 用戶管理 (管理員)
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/users | 獲取所有用戶列表 |
+| POST | /api/users | 新增用戶 |
+| GET | /api/users/:id | 獲取單個用戶 |
+| PUT | /api/users/:id | 更新用戶 |
+| DELETE | /api/users/:id | 刪除用戶 |
+
+### 6.3 病人管理
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/patients | 獲取病人列表 |
+| POST | /api/patients | 新增病人 |
+| GET | /api/patients/:id | 獲取病人詳情 |
+| PUT | /api/patients/:id | 更新病人 |
+| DELETE | /api/patients/:id | 刪除病人 |
+
+### 6.4 病歷記錄
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/patients/:id/alerts | 獲取警示 |
+| POST | /api/patients/:id/alerts | 新增警示 |
+| PUT | /api/alerts/:id | 更新警示 |
+| DELETE | /api/alerts/:id | 刪除警示 |
+| GET | /api/patients/:id/vitals | 獲取生命體徵 |
+| POST | /api/patients/:id/vitals | 新增生命體徵 |
+| PUT | /api/vitals/:id | 更新生命體徵 |
+| DELETE | /api/vitals/:id | 刪除生命體徵 |
+| GET | /api/patients/:id/allergies | 獲取過敏記錄 |
+| POST | /api/patients/:id/allergies | 新增過敏記錄 |
+| PUT | /api/allergies/:id | 更新過敏記錄 |
+| DELETE | /api/allergies/:id | 刪除過敏記錄 |
+
+### 6.5 SOAP 與處方
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/patients/:id/soap | 獲取 SOAP 記錄 |
+| POST | /api/patients/:id/soap | 新增 SOAP 記錄 |
+| PUT | /api/soap/:id | 更新 SOAP 記錄 |
+| DELETE | /api/soap/:id | 刪除 SOAP 記錄 |
+| GET | /api/patients/:id/prescriptions | 獲取處方 |
+| POST | /api/patients/:id/prescriptions | 新增處方 |
+| PUT | /api/prescriptions/:id | 更新處方 |
+| DELETE | /api/prescriptions/:id | 刪除處方 |
+
+### 6.6 文件管理
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/patients/:id/documents | 獲取文件列表 |
+| POST | /api/patients/:id/documents | 上傳文件 |
+| GET | /api/documents/:id/download | 下載文件 |
+| DELETE | /api/documents/:id | 刪除文件 |
+
+### 6.7 預約管理
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/appointments | 獲取預約列表 |
+| POST | /api/appointments | 新增預約 |
+| GET | /api/appointments/:id | 獲取預約詳情 |
+| PUT | /api/appointments/:id | 更新預約 |
+| PUT | /api/appointments/:id/check-in | 報到 |
+| PUT | /api/appointments/:id/complete | 完成就診 |
+| PUT | /api/appointments/:id/cancel | 取消預約 |
+| GET | /api/appointments/waiting | 候診名單 |
+
+### 6.8 查找功能
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/icd10/search?q= | ICD-10 搜尋 |
+| GET | /api/medications/search?q= | 藥物資料搜尋 |
+
+### 6.9 統計
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/statistics/overview | 概覽統計 |
+| GET | /api/statistics/appointments | 預約統計 |
+| GET | /api/statistics/icd10 | ICD-10 疾病統計 |
+
+### 6.10 系統設定 (管理員)
+| 方法 | 端點 | 說明 |
+|------|------|------|
+| GET | /api/settings | 獲取設定 |
+| PUT | /api/settings | 更新設定 |
+| GET | /api/audit-logs | 操作紀錄 |
+
+## 7. 響應式設計
+
+### 7.1 斷點定義
+- **桌面 (Desktop)**: ≥1024px
+- **平板 (Tablet)**: 768px - 1023px
+- **手機 (Mobile)**: <768px (基本支援)
+
+### 7.2 佈局調整
+- **桌面**: 側邊欄固定導航 + 主內容區
+- **平板**: 側邊欄可折疊漢堡選單 + 主內容區
+- **手機**: 底部導航欄 + 單欄佈局
+
+## 8. 安全考量
+
+### 8.1 認證
+- JWT Token 有效期: 24 小時
+- Token 刷新機制
+- 登出時清除 Token
+
+### 8.2 授權
+- 基於角色的訪問控制 (RBAC)
+- 每個 API 端點權限檢查
+- 敏感操作日誌記錄
+
+### 8.3 數據安全
+- 密碼使用 bcrypt 加密
+- SQL 注入防護 (Prisma ORM)
+- XSS 防護 (React 自動轉義)
+- CORS 配置
+
+## 9. 預設登入資訊
+
+| 角色 | 用戶名 | 密碼 |
+|------|--------|------|
+| 管理員 | admin | admin123 |
+| 醫生 | doctor1 | doctor123 |
+| 護士 | nurse1 | nurse123 |
+| 職員 | staff1 | staff123 |
+| 病人 | patient1 | patient123 |
+
+## 10. 預設就診記錄修改時限
+- **預設值**: 48 小時
+- **說明**: 提交就診記錄後，48 小時內可由同一醫生修改 SOAP 及處方藥物
