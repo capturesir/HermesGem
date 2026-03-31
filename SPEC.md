@@ -629,3 +629,247 @@ CREATE TABLE audit_logs (
 ## 10. 預設就診記錄修改時限
 - **預設值**: 48 小時
 - **說明**: 提交就診記錄後，48 小時內可由同一醫生修改 SOAP 及處方藥物
+
+---
+
+## 11. 資料庫結構 (Database Schema)
+
+### 11.1 資料庫資訊
+- **資料庫名稱**: simple_medical_db
+- **字元集**: utf8mb4
+- **排序**: utf8mb4_unicode_ci
+
+### 11.2 資料表清單
+
+| 資料表 | 說明 |
+|--------|------|
+| users | 用戶資料 |
+| patients | 病人資料 |
+| appointments | 預約記錄 |
+| soap_notes | SOAP 就診記錄 |
+| prescriptions | 處方主表 |
+| prescription_medications | 處方藥物明細 |
+| vital_signs | 生命體徵 |
+| allergies | 過敏記錄 |
+| alerts | 特別警示 |
+| documents | 文件管理 |
+| icd10_codes | ICD-10 疾病分類 |
+| medications | 藥物資料庫 |
+| system_settings | 系統設定 |
+| audit_logs | 操作日誌 |
+
+### 11.3 用戶表 (users)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| username | varchar(50) | NO | UNI | |
+| password | varchar(255) | NO | | |
+| name | varchar(100) | NO | | |
+| role | enum('admin','staff','doctor','nurse','patient') | NO | MUL | |
+| title | varchar(50) | YES | | |
+| bio | text | YES | | |
+| gender | enum('male','female','other','unspecified') | YES | | unspecified |
+| avatar | varchar(255) | YES | | |
+| is_active | tinyint(1) | YES | | 1 |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.4 病人表 (patients)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| patient_number | varchar(20) | NO | UNI | |
+| name | varchar(100) | NO | MUL | |
+| gender | varchar(20) | YES | | |
+| birth_date | date | YES | | |
+| id_card | varchar(20) | YES | | |
+| phone | varchar(20) | YES | | |
+| email | varchar(100) | YES | | |
+| address | text | YES | | |
+| emergency_contact | varchar(100) | YES | | |
+| emergency_phone | varchar(20) | YES | | |
+| insurance_type | varchar(50) | YES | | |
+| insurance_number | varchar(50) | YES | | |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.5 預約表 (appointments)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| patient_id | varchar(36) | NO | MUL | |
+| doctor_id | varchar(36) | YES | MUL | |
+| date | date | NO | MUL | |
+| time | time | YES | | |
+| type | enum('first','followup','urgent') | YES | | first |
+| status | enum('pending','checked-in','completed','cancelled') | YES | MUL | pending |
+| notes | text | YES | | |
+| cancel_reason | text | YES | | |
+| cancel_document_url | varchar(255) | YES | | |
+| consultation_type | enum('consultation','other') | YES | | consultation |
+| consultation_notes | text | YES | | |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.6 SOAP 記錄表 (soap_notes)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| patient_id | varchar(36) | NO | MUL | |
+| visit_date | date | NO | | |
+| subjective | text | YES | | |
+| objective | text | YES | | |
+| assessment | text | YES | | |
+| plan | text | YES | | |
+| doctor_id | varchar(36) | NO | MUL | |
+| notes | text | YES | | |
+| appointment_id | varchar(36) | YES | MUL | |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.7 處方主表 (prescriptions)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| patient_id | varchar(36) | NO | MUL | |
+| doctor_id | varchar(36) | NO | MUL | |
+| appointment_id | varchar(36) | YES | MUL | |
+| date | date | NO | | |
+| notes | text | YES | | |
+| status | enum('active','filled','expired') | YES | | active |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.8 處方藥物表 (prescription_medications)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| prescription_id | varchar(36) | NO | | |
+| name | varchar(100) | NO | | |
+| dosage | varchar(50) | NO | | |
+| frequency | varchar(100) | NO | | |
+| route | enum('oral','topical','injection','inhalation','other') | NO | | |
+| duration | int | NO | | |
+
+### 11.9 生命體徵表 (vital_signs)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| patient_id | varchar(36) | NO | MUL | |
+| temperature | decimal(4,1) | YES | | |
+| blood_pressure_systolic | int | YES | | |
+| blood_pressure_diastolic | int | YES | | |
+| heart_rate | int | YES | | |
+| respiratory_rate | int | YES | | |
+| oxygen_saturation | decimal(4,1) | YES | | |
+| weight | decimal(5,1) | YES | | |
+| height | decimal(5,1) | YES | | |
+| notes | text | YES | | |
+| recorded_at | timestamp | YES | | CURRENT_TIMESTAMP |
+| recorded_by | varchar(36) | NO | MUL | |
+
+### 11.10 過敏記錄表 (allergies)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| patient_id | varchar(36) | NO | MUL | |
+| allergen | varchar(100) | NO | | |
+| type | enum('drug','food','environmental','other') | NO | | |
+| severity | enum('mild','moderate','severe','life-threatening') | NO | | |
+| reaction | text | YES | | |
+| recorded_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.11 特別警示表 (alerts)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| patient_id | varchar(36) | NO | MUL | |
+| level | enum('high','medium','low') | NO | | |
+| type | enum('allergy','disease','drug','other') | NO | | |
+| content | text | NO | | |
+| is_active | tinyint(1) | YES | | 1 |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.12 文件表 (documents)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| patient_id | varchar(36) | NO | MUL | |
+| category | enum('lab','imaging','surgery','other') | NO | MUL | |
+| name | varchar(255) | NO | | |
+| file_type | varchar(50) | YES | | |
+| file_url | varchar(500) | NO | | |
+| file_size | int | YES | | |
+| uploaded_by | varchar(36) | NO | MUL | |
+| uploaded_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.13 ICD-10 分類表 (icd10_codes)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(10) | NO | PRI | |
+| code | varchar(10) | NO | | |
+| name_tc | varchar(255) | NO | | |
+| name_en | varchar(255) | YES | | |
+| category | varchar(50) | YES | | |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.14 藥物資料表 (medications)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| name | varchar(100) | NO | | |
+| generic_name | varchar(100) | YES | | |
+| dosage | varchar(50) | YES | | |
+| route | varchar(50) | YES | | |
+| frequency | varchar(100) | YES | | |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.15 系統設定表 (system_settings)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | int | NO | PRI | AUTO_INCREMENT |
+| setting_key | varchar(50) | NO | UNI | |
+| setting_value | text | YES | | |
+| description | varchar(255) | YES | | |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+### 11.16 操作日誌表 (audit_logs)
+
+| 欄位 | 類型 | 可空 | 鍵 | 默認值 |
+|------|------|------|-----|---------|
+| id | varchar(36) | NO | PRI | |
+| user_id | varchar(36) | NO | MUL | |
+| action | varchar(50) | NO | | |
+| module | varchar(50) | NO | | |
+| details | text | YES | | |
+| ip_address | varchar(45) | YES | | |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP |
+
+---
+
+## 12. 系統連接資訊
+
+| 項目 | 設定值 |
+|------|--------|
+| 資料庫主機 | localhost |
+| 資料庫名稱 | simple_medical_db |
+| 資料庫用戶 | root |
+| 資料庫密碼 | clinic123 |
+| 後端 API 端口 | 3000 |
+| 前端端口 | 5176 |
+| JWT 密鑰 | emr_system_secret_key_2024 |
+| JWT 有效期 | 24 小時 |
+
