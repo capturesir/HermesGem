@@ -53,8 +53,8 @@ const Appointments: React.FC = () => {
     switch (status) {
       case 'pending':
         return { icon: Clock, color: 'bg-yellow-100 text-yellow-700', label: '待確認' };
-      case 'confirmed':
-        return { icon: CheckCircle, color: 'bg-blue-100 text-blue-700', label: '已確認' };
+      case 'checked-in':
+        return { icon: CheckCircle, color: 'bg-blue-100 text-blue-700', label: '已報到' };
       case 'completed':
         return { icon: CheckCircle, color: 'bg-green-100 text-green-700', label: '已完成' };
       case 'cancelled':
@@ -130,7 +130,7 @@ const Appointments: React.FC = () => {
           >
             <option value="all">所有狀態</option>
             <option value="pending">待確認</option>
-            <option value="confirmed">已確認</option>
+            <option value="checked-in">已報到</option>
             <option value="completed">已完成</option>
             <option value="cancelled">已取消</option>
           </select>
@@ -210,13 +210,13 @@ const Appointments: React.FC = () => {
                             <div className="flex items-center gap-2">
                               {apt.status === 'pending' && (
                                 <button
-                                  onClick={() => handleStatusChange(apt, 'confirmed')}
+                                  onClick={() => handleStatusChange(apt, 'checked-in')}
                                   className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 >
                                   確認
                                 </button>
                               )}
-                              {(apt.status === 'pending' || apt.status === 'confirmed') && (
+                              {(apt.status === 'pending' || apt.status === 'checked-in') && (
                                 <button
                                   onClick={() => handleStatusChange(apt, 'completed')}
                                   className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
