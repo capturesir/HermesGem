@@ -24,9 +24,9 @@ AIGC:
 
 ### 2.2 色彩系統
 ```
-Primary:     #2563EB (藍色 - 專業、可信)
-Secondary:   #0F172A (深色文字)
-Accent:      #10B981 (綠色 - 成功/完成)
+Primary:     #2B5D3A (綠色 - 專業、信任)
+Secondary:   #4A90E2 (藍色 - 輔助)
+Accent:      #F5A623 (橙色 - 強調)
 Warning:     #F59E0B (橙黃色 - 警示)
 Danger:      #EF4444 (紅色 - 危險/高警示)
 Background:  #F8FAFC (淺灰背景)
