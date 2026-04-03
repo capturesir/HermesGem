@@ -255,7 +255,7 @@ TextMuted:   #64748B (次要文字)
 - **Runtime**: Node.js 18+
 - **框架**: Express.js
 - **資料庫**: MySQL 8.0
-- **ORM**: Prisma
+- **ORM**: mysql2 (原生 SQL，無 Prisma)
 - **認證**: JWT (JSON Web Tokens)
 - **密碼加密**: bcrypt
 
@@ -635,7 +635,7 @@ CREATE TABLE audit_logs (
 ## 11. 資料庫結構 (Database Schema)
 
 ### 11.1 資料庫資訊
-- **資料庫名稱**: simple_medical_db
+- **資料庫名稱**: simple_medical_db（由 .env 設定；初始化腳本 init.sql 預設名為 emr_system，使用前請確認一致性）
 - **字元集**: utf8mb4
 - **排序**: utf8mb4_unicode_ci
 
@@ -865,7 +865,7 @@ CREATE TABLE audit_logs (
 | 項目 | 設定值 |
 |------|--------|
 | 資料庫主機 | localhost |
-| 資料庫名稱 | simple_medical_db |
+| 資料庫名稱 | simple_medical_db （初始化腳本 init.sql 預設為 emr_system，以 .env 設定為準）|
 | 資料庫用戶 | root |
 | 資料庫密碼 | clinic123 |
 | 後端 API 端口 | 3000 |
