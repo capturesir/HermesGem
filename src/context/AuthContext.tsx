@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
-import { initialUsers, generateId } from '../data/initialData';
-import { getCSTISOString } from '../lib/dateUtils';
 import api from '../services/api';
 import { toSnakeCase } from '../lib/apiUtils';
 
@@ -25,21 +23,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    // Load users list from localStorage (for user management)
-    const storedUsers = localStorage.getItem('emr_users');
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
-    } else {
-      setUsers(initialUsers);
-      localStorage.setItem('emr_users', JSON.stringify(initialUsers));
-    }
-
     // Check for existing session (token + user)
     const storedToken = localStorage.getItem('emr_token');
     const storedUser = localStorage.getItem('emr_current_user');
     if (storedToken && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
+        // Load users list from API now that we have a token
+        api.getUsers().then((response: unknown) => {
+          const usersData = response as User[];
+          if (Array.isArray(usersData)) setUsers(usersData);
+        }).catch(console.error);
       } catch {
         // Corrupt data, clear
         localStorage.removeItem('emr_token');
