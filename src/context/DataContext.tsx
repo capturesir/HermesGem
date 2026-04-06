@@ -89,41 +89,45 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [settings, setSettings] = useState<SystemSettings>({} as SystemSettings);
 
   // Initialize: load all data from API
-  useEffect(() => {
-    const loadAll = async () => {
-      const token = localStorage.getItem('emr_token');
-      if (!token) return;
+  const loadAll = useCallback(async () => {
+    const token = localStorage.getItem('emr_token');
+    if (!token) return;
 
-      setPatientsLoading(true);
-      try {
-        const results = await Promise.allSettled([
-          api.getPatients(),
-          api.getAppointments(),
-          api.getSettings(),
-        ]);
+    setPatientsLoading(true);
+    try {
+      const results = await Promise.allSettled([
+        api.getPatients(),
+        api.getAppointments(),
+        api.getSettings(),
+      ]);
 
-        const [patientsResult, appointmentsResult, settingsResult] = results;
+      const [patientsResult, appointmentsResult, settingsResult] = results;
 
-        if (patientsResult.status === 'fulfilled') {
-          setPatients((patientsResult.value as { patients: Patient[] }).patients || []);
-        }
-
-        if (appointmentsResult.status === 'fulfilled') {
-          setAppointments((appointmentsResult.value as { appointments: Appointment[] }).appointments || []);
-        }
-
-        if (settingsResult.status === 'fulfilled') {
-          setSettings(settingsResult.value as SystemSettings);
-        }
-      } catch (e) {
-        console.error('Failed to load data:', e);
-      } finally {
-        setPatientsLoading(false);
+      if (patientsResult.status === 'fulfilled') {
+        setPatients((patientsResult.value as { patients: Patient[] }).patients || []);
       }
-    };
 
-    loadAll();
+      if (appointmentsResult.status === 'fulfilled') {
+        setAppointments((appointmentsResult.value as { appointments: Appointment[] }).appointments || []);
+      }
+
+      if (settingsResult.status === 'fulfilled') {
+        setSettings(settingsResult.value as SystemSettings);
+      }
+    } catch (e) {
+      console.error('Failed to load data:', e);
+    } finally {
+      setPatientsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadAll();
+    // Listen for login events to reload data after authentication
+    const handleLoginSuccess = () => loadAll();
+    window.addEventListener('auth:loginSuccess', handleLoginSuccess);
+    return () => window.removeEventListener('auth:loginSuccess', handleLoginSuccess);
+  }, [loadAll]);
 
   // Refresh patients from API
   const refreshPatients = useCallback(async () => {

@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (foundUser) {
       setUser(foundUser);
       localStorage.setItem('emr_current_user', JSON.stringify(foundUser));
+      window.dispatchEvent(new CustomEvent('auth:loginSuccess'));
       return true;
     }
     return false;
