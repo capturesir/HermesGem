@@ -33,7 +33,7 @@ const PERMISSIONS = {
   doctor: {
     users: { view: false, create: false, edit: false, delete: false },
     patients: { view: true, create: true, edit: true, delete: false },
-    appointments: { view: true, create: false, edit: true, delete: false },
+    appointments: { view: true, create: true, edit: true, delete: false },
     settings: { view: false, create: false, edit: false, delete: false },
     soap: { view: true, create: true, edit: true, delete: true },
     prescriptions: { view: true, create: true, edit: true, delete: true },

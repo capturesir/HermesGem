@@ -101,19 +101,23 @@ const AppointmentForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
 
-    addAppointment({
-      ...formData,
-      patientId: formData.patientId,
-      patientName: formData.patientName,
-    });
-
-    showToast('success', '預約已成功建立');
-    navigate('/appointments');
+    try {
+      await addAppointment({
+        ...formData,
+        patientId: formData.patientId,
+        patientName: formData.patientName,
+      });
+      showToast('success', '預約已成功建立');
+      navigate('/appointments');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '新增預約失敗，請稍後再試';
+      showToast('error', message);
+    }
   };
 
   // Generate time slots
