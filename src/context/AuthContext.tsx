@@ -3,6 +3,7 @@ import { User } from '../types';
 import { initialUsers, generateId } from '../data/initialData';
 import { getCSTISOString } from '../lib/dateUtils';
 import api from '../services/api';
+import { toSnakeCase } from '../lib/apiUtils';
 
 interface AuthContextType {
   user: User | null;
@@ -10,9 +11,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  register: (userData: Partial<User>) => boolean;
-  updateUser: (id: string, userData: Partial<User>) => boolean;
-  deleteUser: (id: string) => boolean;
+  register: (userData: Partial<User>) => Promise<{ success: boolean; error?: string }>;
+  updateUser: (id: string, userData: Partial<User>) => Promise<boolean>;
+  deleteUser: (id: string) => Promise<boolean>;
   getUsersByRole: (role: string) => User[];
   getUserById: (id: string) => User | undefined;
 }
@@ -73,61 +74,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.dispatchEvent(new CustomEvent('auth:logout'));
   };
 
-  const register = (userData: Partial<User>): boolean => {
+  const register = async (userData: Partial<User>): Promise<{ success: boolean; error?: string }> => {
     if (!userData.username || !userData.name || !userData.role) {
+      return { success: false, error: '請填寫所有必填欄位' };
+    }
+
+    try {
+      const snakeCaseData = toSnakeCase(userData as Record<string, unknown>);
+      const created = await api.createUser(snakeCaseData);
+      const apiUser = created as User;
+      setUsers(prev => [...prev, apiUser]);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '創建用戶失敗';
+      return { success: false, error: message };
+    }
+  };
+
+  const updateUser = async (id: string, userData: Partial<User>): Promise<boolean> => {
+    try {
+      const snakeCaseData = toSnakeCase(userData as Record<string, unknown>);
+      await api.updateUser(id, snakeCaseData);
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, ...userData } : u));
+      if (user && user.id === id) {
+        setUser({ ...user, ...userData });
+      }
+      return true;
+    } catch (error) {
+      console.error('Update user error:', error);
       return false;
     }
-
-    const newUser: User = {
-      id: generateId(),
-      username: userData.username,
-      password: userData.password || '123456',
-      name: userData.name,
-      role: userData.role,
-      title: userData.title,
-      bio: userData.bio,
-      gender: userData.gender || 'unspecified',
-      createdAt: getCSTISOString(),
-      updatedAt: getCSTISOString(),
-    };
-
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    localStorage.setItem('emr_users', JSON.stringify(updatedUsers));
-    return true;
   };
 
-  const updateUser = (id: string, userData: Partial<User>): boolean => {
-    const userIndex = users.findIndex(u => u.id === id);
-    if (userIndex === -1) return false;
-
-    const updatedUsers = [...users];
-    updatedUsers[userIndex] = {
-      ...updatedUsers[userIndex],
-      ...userData,
-      updatedAt: getCSTISOString(),
-    };
-
-    setUsers(updatedUsers);
-    localStorage.setItem('emr_users', JSON.stringify(updatedUsers));
-
-    // Update current user if it's the same
-    if (user && user.id === id) {
-      const updatedUser = { ...user, ...userData, updatedAt: getCSTISOString() };
-      setUser(updatedUser);
-      localStorage.setItem('emr_current_user', JSON.stringify(updatedUser));
+  const deleteUser = async (id: string): Promise<boolean> => {
+    try {
+      await api.deleteUser(id);
+      setUsers(prev => prev.filter(u => u.id !== id));
+      return true;
+    } catch (error) {
+      console.error('Delete user error:', error);
+      return false;
     }
-
-    return true;
-  };
-
-  const deleteUser = (id: string): boolean => {
-    if (user && user.id === id) return false; // Can't delete yourself
-
-    const updatedUsers = users.filter(u => u.id !== id);
-    setUsers(updatedUsers);
-    localStorage.setItem('emr_users', JSON.stringify(updatedUsers));
-    return true;
   };
 
   const getUsersByRole = (role: string): User[] => {

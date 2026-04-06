@@ -75,14 +75,13 @@ const UserForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
 
-    let success: boolean;
     if (isEditing && id) {
-      success = updateUser(id, formData);
+      const success = await updateUser(id, formData);
       if (success) {
         showToast('success', '用戶資料已更新');
         navigate('/users');
@@ -90,12 +89,12 @@ const UserForm: React.FC = () => {
         showToast('error', '更新失敗');
       }
     } else {
-      success = register(formData);
-      if (success) {
+      const result = await register(formData);
+      if (result.success) {
         showToast('success', '用戶已成功創建');
         navigate('/users');
       } else {
-        showToast('error', '創建失敗');
+        showToast('error', result.error || '創建失敗');
       }
     }
   };
