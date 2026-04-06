@@ -49,7 +49,7 @@ router.delete('/prescriptions/:id', requirePermission('prescriptions', 'delete')
 
 // Documents
 router.get('/:patientId/documents', documentController.getDocumentsByPatient);
-router.post('/:patientId/documents', requirePermission('documents', 'create'), documentController.upload);
+router.post('/:patientId/documents', requirePermission('documents', 'create'), documentController.upload.single('file'), documentController.uploadDocument);
 router.delete('/documents/:id', requirePermission('documents', 'delete'), documentController.deleteDocument);
 
 module.exports = router;
