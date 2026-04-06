@@ -24,8 +24,24 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-06 18:08 (Asia/Macau)
-**Git HEAD**: `ae0ace7` — docs: fix SPEC.md ORM description and DB name consistency
+**上次檢查**: 2026-04-07 00:51 (Asia/Macau)
+**Git HEAD**: `48d940c` — fix: refactor DataContext to load all data from API only, remove localStorage fallback
+
+---
+
+## 0.1 待解決問題 (Known Issues)
+
+> 記錄所有已知未完成的問題，後續開發必須依序完成這些項目才能達到 Production 標準。
+
+| ID | 模組 | 問題描述 | 嚴重程度 | 優先順序 | 備註 |
+|----|------|---------|---------|---------|------|
+| #K01 | DataContext | `alerts / vitals / allergies / soap / prescriptions` 後端只有 per-patient 端點，DataContext 初始化時無法預載這些數據，目前為空陣列 | 中 | 中 | 需要新增對應的全域 API 或調整 DataContext 加載策略 |
+| #K02 | Appointments | `deleteAppointment()` 後端 API 不存在，目前只更新本地 state，刪除後不會寫入資料庫 | 高 | 高 | 需要後端新增 `DELETE /appointments/:id` |
+| #K03 | Documents | `addDocument / updateDocument / deleteDocument` 後端無對應 API，目前只操作本地 state | 中 | 中 | 需要後端對應的 documents CRUD API |
+| #K04 | 即時同步 | 多人同時使用系統時，無 WebSocket 機制，其他人需要手動刷新才能看到更新 | 高 | 高 | 行業標準：任何資料庫寫入後應即時推送至所有在線客戶端 |
+| #K05 | 時區 | 前端 `new Date().toISOString()` 使用 UTC，后端 `CURDATE()` 使用 CST (+8)，每日 00:00~00:59 會出現 1 天偏差 | 中 | 中 | 需要統一時區處理邏輯 |
+
+> ⚠️ **日後新增問題**：任何新發現的未完成問題，都必須立即記錄在此區塊，格式同上，不得遺漏。
 
 ---
 
