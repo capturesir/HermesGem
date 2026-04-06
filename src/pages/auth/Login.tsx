@@ -12,7 +12,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -21,11 +21,11 @@ const Login: React.FC = () => {
       return;
     }
 
-    const success = login(username, password);
-    if (success) {
+    const result = await login(username, password);
+    if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('帳號或密碼錯誤');
+      setError(result.error || '帳號或密碼錯誤');
     }
   };
 

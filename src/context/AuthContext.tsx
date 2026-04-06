@@ -2,12 +2,13 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User } from '../types';
 import { initialUsers, generateId } from '../data/initialData';
 import { getCSTISOString } from '../lib/dateUtils';
+import api from '../services/api';
 
 interface AuthContextType {
   user: User | null;
   users: User[];
   isAuthenticated: boolean;
-  login: (username: string, password: string) => boolean;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   register: (userData: Partial<User>) => boolean;
   updateUser: (id: string, userData: Partial<User>) => boolean;
@@ -23,7 +24,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    // Load users from localStorage
+    // Load users list from localStorage (for user management)
     const storedUsers = localStorage.getItem('emr_users');
     if (storedUsers) {
       setUsers(JSON.parse(storedUsers));
@@ -32,27 +33,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.setItem('emr_users', JSON.stringify(initialUsers));
     }
 
-    // Check for logged in user
+    // Check for existing session (token + user)
+    const storedToken = localStorage.getItem('emr_token');
     const storedUser = localStorage.getItem('emr_current_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    if (storedToken && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        // Corrupt data, clear
+        localStorage.removeItem('emr_token');
+        localStorage.removeItem('emr_current_user');
+      }
     }
   }, []);
 
-  const login = (username: string, password: string): boolean => {
-    const foundUser = users.find(u => u.username === username && u.password === password);
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('emr_current_user', JSON.stringify(foundUser));
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await api.login(username, password) as { user: User; token: string };
+      const { user: apiUser, token } = response;
+
+      // Store token for API calls
+      localStorage.setItem('emr_token', token);
+      // Store user data
+      localStorage.setItem('emr_current_user', JSON.stringify(apiUser));
+
+      setUser(apiUser);
       window.dispatchEvent(new CustomEvent('auth:loginSuccess'));
-      return true;
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '登入失敗';
+      return { success: false, error: message };
     }
-    return false;
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('emr_token');
     localStorage.removeItem('emr_current_user');
+    window.dispatchEvent(new CustomEvent('auth:logout'));
   };
 
   const register = (userData: Partial<User>): boolean => {
