@@ -3,7 +3,7 @@ const router = express.Router();
 const patientController = require('../controllers/patientController');
 const medicalRecordController = require('../controllers/medicalRecordController');
 const soapController = require('../controllers/soapController');
-const { upload, uploadDocument, deleteDocument, getDocumentsByPatient } = require('../controllers/documentController');
+const documentController = require('../controllers/documentController');
 const { authenticateToken, requirePermission } = require('../middleware/auth');
 
 // All routes require authentication
@@ -48,8 +48,8 @@ router.put('/prescriptions/:id', requirePermission('prescriptions', 'edit'), soa
 router.delete('/prescriptions/:id', requirePermission('prescriptions', 'delete'), soapController.deletePrescription);
 
 // Documents
-router.get('/:patientId/documents', getDocumentsByPatient);
-router.post('/:patientId/documents', requirePermission('documents', 'create'), upload.single('file'), uploadDocument);
-router.delete('/documents/:id', requirePermission('documents', 'delete'), deleteDocument);
+router.get('/:patientId/documents', documentController.getDocumentsByPatient);
+router.post('/:patientId/documents', requirePermission('documents', 'create'), documentController.upload);
+router.delete('/documents/:id', requirePermission('documents', 'delete'), documentController.deleteDocument);
 
 module.exports = router;

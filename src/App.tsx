@@ -28,6 +28,7 @@ import AppointmentForm from './pages/appointments/AppointmentForm';
 import Statistics from './pages/statistics/Statistics';
 import Lookup from './pages/lookup/Lookup';
 import PrintLabels from './pages/print/PrintLabels';
+import OnlineConsultation from './pages/consultation/OnlineConsultation';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -45,6 +46,17 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
 
   if (user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Doctor Route Component (for Online Consultation)
+const DoctorRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+
+  if (user?.role !== 'doctor') {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -120,6 +132,16 @@ const AppContent: React.FC = () => {
         {/* Appointment Routes */}
         <Route path="appointments" element={<Appointments />} />
         <Route path="appointments/new" element={<AppointmentForm />} />
+
+        {/* Doctor Consultation Routes */}
+        <Route
+          path="consultation"
+          element={
+            <DoctorRoute>
+              <OnlineConsultation />
+            </DoctorRoute>
+          }
+        />
 
         {/* Statistics Routes */}
         <Route path="statistics" element={<Statistics />} />

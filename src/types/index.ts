@@ -92,6 +92,7 @@ export interface SOAPNote {
   doctorId: string;
   doctorName?: string;
   notes?: string;
+  appointmentId?: string;
   createdAt: string;
 }
 
@@ -116,6 +117,7 @@ export interface Prescription {
   doctorName?: string;
   status: PrescriptionStatus;
   notes?: string;
+  appointmentId?: string;
   createdAt: string;
 }
 

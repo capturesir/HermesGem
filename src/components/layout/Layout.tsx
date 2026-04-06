@@ -4,7 +4,7 @@ import {
   Menu, X, LayoutDashboard, Users, UserCircle, Calendar,
   Settings, LogOut, ChevronDown, Stethoscope, Heart, FileText,
   AlertCircle, Activity, Pill, FolderOpen, Shield, BarChart3,
-  Search, Printer
+  Search, Printer, Microscope
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -44,6 +44,7 @@ const Layout: React.FC = () => {
       doctor: [
         { name: '病人列表', href: '/patients', icon: Stethoscope },
         { name: '預約管理', href: '/appointments', icon: Calendar },
+        { name: '線上診症', href: '/consultation', icon: Microscope },
         { name: '數據統計', href: '/statistics', icon: BarChart3 },
         { name: '查找工具', href: '/lookup', icon: Search },
         { name: '藥物標籤', href: '/print', icon: Printer },

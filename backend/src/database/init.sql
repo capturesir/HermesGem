@@ -1,8 +1,8 @@
 -- EMR System Database Schema
 -- Run this script to initialize the database
 
-CREATE DATABASE IF NOT EXISTS simple_medical_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE simple_medical_db;
+CREATE DATABASE IF NOT EXISTS emr_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE emr_system;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
