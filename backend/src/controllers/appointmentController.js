@@ -126,7 +126,7 @@ const createAppointment = async (req, res) => {
     await pool.execute(
       `INSERT INTO appointments (id, patient_id, doctor_id, date, time, type, status, notes)
        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
-      [id, patient_id, doctor_id, date, time || null, type || 'first', notes]
+      [id, patient_id, doctor_id || null, date, time || null, type || 'first', notes || null]
     );
 
     await logAudit(req.user.id, 'CREATE', 'appointments', { appointmentId: id, patient_id, date }, req.ip);
