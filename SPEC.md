@@ -9,6 +9,26 @@ AIGC:
     ReservedCode2: 30450221009fbe463b70a1df461f272f55059fe7b67da07b1d845d0fb736742d78aace190f0220785f8a70157b424e47018176782aa5006a09d267c4a7f36017b6d7223f154ae0
 ---
 
+## 0. 開發狀態 (Development Status)
+
+| 項目 | 狀態 |
+|------|------|
+| 初始化版本 | ✅ 完成 (commit `1b6cee2`) |
+| 資料初始化修復 | ✅ 完成 (commit `fcc03a6`) |
+| 預約狀態修正 | ✅ 完成 (commit `a7afe78`) |
+| SPEC.md 色彩修正 | ✅ 完成 (commit `9faabfb`) |
+| SPEC.md Schema 修正 | ✅ 完成 (commit `164ad1b`) |
+| SPEC.md ORM/DB 修正 | ✅ 完成 (commit `ae0ace7`) |
+| 前端構建 (chunk size) | ⚠️ 1432 KB JS，需代碼分割 |
+| TypeScript | ✅ 無錯誤 |
+| 後端服務 | ✅ 運行中 (port 3000) |
+| 前端服務 | ✅ 運行中 (port 5176) |
+
+**上次檢查**: 2026-04-06 18:08 (Asia/Macau)
+**Git HEAD**: `ae0ace7` — docs: fix SPEC.md ORM description and DB name consistency
+
+---
+
 # 電子病歷系統 (EMR System) - 規格文檔
 
 ## 1. 概念與願景
