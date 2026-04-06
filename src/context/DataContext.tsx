@@ -3,6 +3,7 @@ import {
   Patient, Alert, VitalSign, Allergy, SOAPNote, Prescription, Document, Appointment, SystemSettings
 } from '../types';
 import api from '../services/api';
+import { toSnakeCase } from '../lib/apiUtils';
 import { getCSTISOString } from '../lib/dateUtils';
 
 interface DataContextType {
@@ -157,7 +158,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Patient functions
   const addPatient = async (patient: Partial<Patient>): Promise<Patient> => {
-    const created = await api.createPatient(patient);
+    const snakeCasePatient = toSnakeCase(patient as Record<string, unknown>);
+    const created = await api.createPatient(snakeCasePatient);
     const apiPatient = created as Patient;
     setPatients(prev => [...prev, apiPatient]);
     return apiPatient;
@@ -355,14 +357,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Appointment functions
   const addAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
-    const created = await api.createAppointment(appointment);
+    const snakeCaseAppointment = toSnakeCase(appointment as Record<string, unknown>);
+    const created = await api.createAppointment(snakeCaseAppointment);
     const apiAppointment = created as Appointment;
     setAppointments(prev => [...prev, apiAppointment]);
     return apiAppointment;
   };
 
   const updateAppointment = async (id: string, appointment: Partial<Appointment>): Promise<boolean> => {
-    await api.updateAppointment(id, appointment);
+    const snakeCaseAppointment = toSnakeCase(appointment as Record<string, unknown>);
+    await api.updateAppointment(id, snakeCaseAppointment);
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...appointment } : a));
     return true;
   };
