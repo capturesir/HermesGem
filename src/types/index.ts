@@ -123,7 +123,7 @@ export interface Prescription {
 
 // Appointment Types
 export type AppointmentType = 'first' | 'followup' | 'urgent';
-export type AppointmentStatus = 'pending' | 'confirmed' | 'checked-in' | 'completed' | 'cancelled';
+export type AppointmentStatus = 'pending' | 'checked-in' | 'completed' | 'cancelled';
 
 export interface Appointment {
   id: string;

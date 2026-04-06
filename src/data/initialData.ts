@@ -148,7 +148,7 @@ export const initialAppointments: Appointment[] = [
     date: new Date().toISOString().split('T')[0],
     time: '11:30',
     type: 'urgent',
-    status: 'confirmed',
+    status: 'pending',
     notes: '胸痛緊急門診',
     createdAt: new Date().toISOString(),
   },

@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
                         className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                           apt.status === 'completed'
                             ? 'bg-green-100 text-green-700'
-                            : apt.status === 'confirmed'
+                            : apt.status === 'checked-in'
                             ? 'bg-blue-100 text-blue-700'
                             : apt.status === 'cancelled'
                             ? 'bg-red-100 text-red-700'
@@ -151,7 +151,7 @@ const Dashboard: React.FC = () => {
                         }`}
                       >
                         {apt.status === 'completed' ? '已完成'
-                          : apt.status === 'confirmed' ? '已確認'
+                          : apt.status === 'checked-in' ? '已報到'
                           : apt.status === 'cancelled' ? '已取消'
                           : '待確認'}
                       </span>
