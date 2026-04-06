@@ -1,4 +1,5 @@
 import { User, Patient, Appointment, Alert, VitalSign, Allergy, SOAPNote, Prescription, Document, SystemSettings } from '../types';
+import { getCSTDateString, getCSTISOString } from '../lib/dateUtils';
 
 // Generate unique IDs
 export const generateId = (): string => {
@@ -16,8 +17,8 @@ export const initialUsers: User[] = [
     title: '系統管理員',
     bio: '負責系統維護與用戶管理',
     gender: 'male',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
+    updatedAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -28,8 +29,8 @@ export const initialUsers: User[] = [
     title: '內科主任',
     bio: '擁有20年臨床經驗的內科專科醫生',
     gender: 'male',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
+    updatedAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -40,8 +41,8 @@ export const initialUsers: User[] = [
     title: '護理長',
     bio: '專責病人護理與生命體徵記錄',
     gender: 'female',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
+    updatedAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -52,8 +53,8 @@ export const initialUsers: User[] = [
     title: '櫃台接待員',
     bio: '負責預約登記與行政事務',
     gender: 'male',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
+    updatedAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -62,8 +63,8 @@ export const initialUsers: User[] = [
     name: '張小黃',
     role: 'patient',
     gender: 'male',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
+    updatedAt: getCSTISOString(),
   },
 ];
 
@@ -82,8 +83,8 @@ export const initialPatients: Patient[] = [
     emergencyPhone: '0912-345-679',
     insuranceType: '全民健保',
     insuranceNumber: 'N123456789',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
+    updatedAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -97,8 +98,8 @@ export const initialPatients: Patient[] = [
     emergencyPhone: '0932-456-790',
     insuranceType: '全民健保',
     insuranceNumber: 'N987654321',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
+    updatedAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -112,8 +113,8 @@ export const initialPatients: Patient[] = [
     emergencyPhone: '0955-678-902',
     insuranceType: '勞保',
     insuranceNumber: 'L456789012',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
+    updatedAt: getCSTISOString(),
   },
 ];
 
@@ -123,34 +124,34 @@ export const initialAppointments: Appointment[] = [
     id: generateId(),
     patientId: initialPatients[0].id,
     patientName: '張小黃',
-    date: new Date().toISOString().split('T')[0],
+    date: getCSTDateString(),
     time: '09:00',
     type: 'followup',
     status: 'checked-in',
     notes: '血壓追蹤檢查',
-    createdAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
   },
   {
     id: generateId(),
     patientId: initialPatients[1].id,
     patientName: '李小茹',
-    date: new Date().toISOString().split('T')[0],
+    date: getCSTDateString(),
     time: '10:30',
     type: 'first',
     status: 'checked-in',
     notes: '初診諮詢',
-    createdAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
   },
   {
     id: generateId(),
     patientId: initialPatients[2].id,
     patientName: '王大強',
-    date: new Date().toISOString().split('T')[0],
+    date: getCSTDateString(),
     time: '11:30',
     type: 'urgent',
     status: 'pending',
     notes: '胸痛緊急門診',
-    createdAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
   },
 ];
 
@@ -163,7 +164,7 @@ export const initialAlerts: Alert[] = [
     type: 'allergy',
     content: '對青黴素過敏，服用後可能引起嚴重過敏反應',
     isActive: true,
-    createdAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -172,7 +173,7 @@ export const initialAlerts: Alert[] = [
     type: 'disease',
     content: '糖尿病患者，需定期監測血糖',
     isActive: true,
-    createdAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
   },
 ];
 
@@ -190,7 +191,7 @@ export const initialVitalSigns: VitalSign[] = [
     weight: 75,
     height: 172,
     notes: '血壓偏高，建議持續追蹤',
-    recordedAt: new Date().toISOString(),
+    recordedAt: getCSTISOString(),
     recordedBy: '林美麗護士',
   },
   {
@@ -205,7 +206,7 @@ export const initialVitalSigns: VitalSign[] = [
     weight: 55,
     height: 165,
     notes: '體溫略高，屬正常波動範圍',
-    recordedAt: new Date().toISOString(),
+    recordedAt: getCSTISOString(),
     recordedBy: '林美麗護士',
   },
 ];
@@ -219,7 +220,7 @@ export const initialAllergies: Allergy[] = [
     type: 'drug',
     severity: 'severe',
     reaction: '全身蕁麻疹、呼吸困難',
-    recordedAt: new Date().toISOString(),
+    recordedAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -228,7 +229,7 @@ export const initialAllergies: Allergy[] = [
     type: 'food',
     severity: 'moderate',
     reaction: '皮膚紅疹、輕微腫脹',
-    recordedAt: new Date().toISOString(),
+    recordedAt: getCSTISOString(),
   },
 ];
 
@@ -237,7 +238,7 @@ export const initialSOAPNotes: SOAPNote[] = [
   {
     id: generateId(),
     patientId: initialPatients[0].id,
-    visitDate: new Date().toISOString().split('T')[0],
+    visitDate: getCSTDateString(),
     subjective: '頭痛、頭暈，持續約一週，近兩天症狀加重',
     objective: '血壓 140/90 mmHg，心率 78 bpm，無明顯神經系統異常',
     assessment: '原發性高血壓，需藥物控制',
@@ -245,7 +246,7 @@ export const initialSOAPNotes: SOAPNote[] = [
     doctorId: initialUsers[1].id,
     doctorName: '陳大明醫生',
     notes: '患者依從性良好',
-    createdAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
   },
 ];
 
@@ -254,7 +255,7 @@ export const initialPrescriptions: Prescription[] = [
   {
     id: generateId(),
     patientId: initialPatients[0].id,
-    date: new Date().toISOString().split('T')[0],
+    date: getCSTDateString(),
     medications: [
       {
         name: '血壓藥',
@@ -275,7 +276,7 @@ export const initialPrescriptions: Prescription[] = [
     doctorName: '陳大明醫生',
     status: 'active',
     notes: '飯後服用',
-    createdAt: new Date().toISOString(),
+    createdAt: getCSTISOString(),
   },
 ];
 
@@ -289,7 +290,7 @@ export const initialDocuments: Document[] = [
     fileType: 'pdf',
     fileUrl: '',
     uploadedBy: '林美麗護士',
-    uploadedAt: new Date().toISOString(),
+    uploadedAt: getCSTISOString(),
   },
   {
     id: generateId(),
@@ -299,7 +300,7 @@ export const initialDocuments: Document[] = [
     fileType: 'jpg',
     fileUrl: '',
     uploadedBy: '陳大明醫生',
-    uploadedAt: new Date().toISOString(),
+    uploadedAt: getCSTISOString(),
   },
 ];
 

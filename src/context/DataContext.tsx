@@ -3,6 +3,7 @@ import {
   Patient, Alert, VitalSign, Allergy, SOAPNote, Prescription, Document, Appointment, SystemSettings
 } from '../types';
 import api from '../services/api';
+import { getCSTISOString } from '../lib/dateUtils';
 
 interface DataContextType {
   // Patients
@@ -321,7 +322,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       fileType: document.fileType || '',
       fileUrl: document.fileUrl || '',
       uploadedBy: document.uploadedBy || '',
-      uploadedAt: new Date().toISOString(),
+      uploadedAt: getCSTISOString(),
     };
     setDocuments(prev => [...prev, newDocument]);
     return newDocument;

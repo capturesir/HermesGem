@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import { AppointmentType } from '../../types';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 const AppointmentForm: React.FC = () => {
   const navigate = useNavigate();
@@ -221,7 +222,7 @@ const AppointmentForm: React.FC = () => {
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
-                min={new Date().toISOString().split('T')[0]}
+                min={getCSTDateString()}
                 className={`w-full px-4 py-2.5 border rounded-lg outline-none transition-all ${
                   errors.date
                     ? 'border-red-300 focus:ring-2 focus:ring-red-200'

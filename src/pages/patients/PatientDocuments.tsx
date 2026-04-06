@@ -5,6 +5,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Document, DocumentCategory } from '../../types';
+import { formatDateCST, formatTimeCST } from '../../lib/dateUtils';
 
 const PatientDocuments: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -268,7 +269,7 @@ const PatientDocuments: React.FC = () => {
                   <span className="text-xs text-slate-500 uppercase">{doc.fileType}</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
-                  上傳者：{doc.uploadedBy} | {new Date(doc.uploadedAt).toLocaleDateString('zh-TW')}
+                  上傳者：{doc.uploadedBy} | {formatDateCST(doc.uploadedAt)}
                 </p>
               </div>
               {user?.role !== 'patient' && (

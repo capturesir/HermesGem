@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Edit, Trash2, AlertTriangle, ToggleLeft, ToggleRight, 
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import { Alert, AlertLevel, AlertType } from '../../types';
+import { formatDateCST, formatTimeCST } from '../../lib/dateUtils';
 
 const PatientAlerts: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -269,7 +270,7 @@ const PatientAlerts: React.FC = () => {
                     </div>
                     <p className="text-slate-900">{alert.content}</p>
                     <p className="text-sm text-slate-500 mt-2">
-                      建立時間：{new Date(alert.createdAt).toLocaleDateString('zh-TW')}
+                      建立時間：{formatDateCST(alert.createdAt)}
                     </p>
                   </div>
                 </div>

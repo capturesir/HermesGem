@@ -5,6 +5,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { VitalSign } from '../../types';
+import { formatDateCST, formatTimeCST } from '../../lib/dateUtils';
 
 const PatientVitals: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -338,7 +339,7 @@ const PatientVitals: React.FC = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-sm text-slate-500">
-                    {new Date(vitals.recordedAt).toLocaleDateString('zh-TW')} {new Date(vitals.recordedAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                    {formatDateCST(vitals.recordedAt)} {formatTimeCST(vitals.recordedAt)}
                   </p>
                   <p className="text-sm text-slate-600 mt-1">記錄者：{vitals.recordedBy}</p>
                 </div>

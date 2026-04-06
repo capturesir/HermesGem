@@ -5,6 +5,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Prescription, PrescriptionStatus, Medication, MedicationRoute } from '../../types';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 const PatientPrescriptions: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +19,7 @@ const PatientPrescriptions: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getCSTDateString(),
     medications: [{ name: '', dosage: '', frequency: '', route: 'oral' as MedicationRoute, duration: 7 }] as Medication[],
     status: 'active' as PrescriptionStatus,
     notes: '',
@@ -91,7 +92,7 @@ const PatientPrescriptions: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      date: new Date().toISOString().split('T')[0],
+      date: getCSTDateString(),
       medications: [{ name: '', dosage: '', frequency: '', route: 'oral', duration: 7 }],
       status: 'active',
       notes: '',

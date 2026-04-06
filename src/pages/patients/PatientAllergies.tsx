@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Edit, Trash2, Heart, X } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import { Allergy, AllergyType, AllergySeverity } from '../../types';
+import { formatDateCST, formatTimeCST } from '../../lib/dateUtils';
 
 const PatientAllergies: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -262,7 +263,7 @@ const PatientAllergies: React.FC = () => {
                         {getSeverityText(allergy.severity)}
                       </span>
                       <span className="text-sm text-slate-500">
-                        記錄時間：{new Date(allergy.recordedAt).toLocaleDateString('zh-TW')}
+                        記錄時間：{formatDateCST(allergy.recordedAt)}
                       </span>
                     </div>
                   </div>

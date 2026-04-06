@@ -5,6 +5,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { SOAPNote } from '../../types';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 const PatientSOAP: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +19,7 @@ const PatientSOAP: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingNote, setEditingNote] = useState<SOAPNote | null>(null);
   const [formData, setFormData] = useState({
-    visitDate: new Date().toISOString().split('T')[0],
+    visitDate: getCSTDateString(),
     subjective: '',
     objective: '',
     assessment: '',
@@ -63,7 +64,7 @@ const PatientSOAP: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      visitDate: new Date().toISOString().split('T')[0],
+      visitDate: getCSTDateString(),
       subjective: '',
       objective: '',
       assessment: '',

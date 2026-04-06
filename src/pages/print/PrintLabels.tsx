@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Printer, Download, Edit, RefreshCw } from 'lucide-react';
 import { useData } from '@/context/DataContext';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 interface LabelContent {
   patientName: string;
@@ -26,7 +27,7 @@ const defaultLabel: LabelContent = {
   frequency: '',
   duration: '',
   route: '',
-  date: new Date().toISOString().split('T')[0],
+  date: getCSTDateString(),
   organizationName: '醫療機構電子病歷系統',
   doctorName: '',
   notes: ''

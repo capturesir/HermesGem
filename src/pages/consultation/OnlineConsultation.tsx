@@ -7,6 +7,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Patient, Appointment, SOAPNote, Prescription, Medication, MedicationRoute } from '../../types';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 interface CurrentConsultation {
   patient: Patient;
@@ -32,7 +33,7 @@ const OnlineConsultation: React.FC = () => {
   const { showToast } = useToast();
 
   // Get waiting list (checked-in appointments for today only)
-  const today = new Date().toISOString().split('T')[0];
+  const today = getCSTDateString();
   const waitingPatients = appointments
     .filter(apt => apt.status === 'checked-in' && apt.date === today)
     .map(apt => {
@@ -46,7 +47,7 @@ const OnlineConsultation: React.FC = () => {
 
   // SOAP Form State
   const [soapForm, setSoapForm] = useState({
-    visitDate: new Date().toISOString().split('T')[0],
+    visitDate: getCSTDateString(),
     subjective: '',
     objective: '',
     assessment: '',
@@ -56,7 +57,7 @@ const OnlineConsultation: React.FC = () => {
 
   // Prescription Form State
   const [prescriptionForm, setPrescriptionForm] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getCSTDateString(),
     medications: [{ name: '', dosage: '', frequency: '', route: 'oral' as MedicationRoute, duration: 7 }] as Medication[],
     notes: '',
   });
@@ -76,7 +77,7 @@ const OnlineConsultation: React.FC = () => {
 
     // Reset forms
     setSoapForm({
-      visitDate: new Date().toISOString().split('T')[0],
+      visitDate: getCSTDateString(),
       subjective: '',
       objective: '',
       assessment: '',
@@ -84,7 +85,7 @@ const OnlineConsultation: React.FC = () => {
       notes: '',
     });
     setPrescriptionForm({
-      date: new Date().toISOString().split('T')[0],
+      date: getCSTDateString(),
       medications: [{ name: '', dosage: '', frequency: '', route: 'oral', duration: 7 }],
       notes: '',
     });

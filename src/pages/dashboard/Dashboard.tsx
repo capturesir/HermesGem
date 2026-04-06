@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -18,7 +19,7 @@ const Dashboard: React.FC = () => {
     return '晚安';
   };
 
-  const todayAppointments = appointments.filter(a => a.date === new Date().toISOString().split('T')[0]);
+  const todayAppointments = appointments.filter(a => a.date === getCSTDateString());
   const activeAlerts = alerts.filter(a => a.isActive);
   const todayCompleted = todayAppointments.filter(a => a.status === 'completed').length;
 

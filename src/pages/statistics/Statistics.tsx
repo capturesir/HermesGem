@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Calendar, Users, UserCheck, TrendingUp, Activity, Download } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
@@ -14,13 +15,13 @@ export default function Statistics() {
   const { patients, appointments } = useData();
   const { user } = useAuth();
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
+    startDate: getCSTDateString().slice(0, 7) + '-01',
+    endDate: getCSTDateString()
   });
   const [selectedPatient, setSelectedPatient] = useState<string>('');
 
   // Calculate statistics
-  const todayAppointments = appointments.filter(a => a.date === new Date().toISOString().split('T')[0]);
+  const todayAppointments = appointments.filter(a => a.date === getCSTDateString());
   const completedToday = todayAppointments.filter(a => a.status === 'completed').length;
   const waitingCount = todayAppointments.filter(a => a.status === 'checked-in').length;
 

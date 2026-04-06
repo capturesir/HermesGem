@@ -9,6 +9,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { SOAPNote, Prescription, PrescriptionStatus, Medication, MedicationRoute } from '../../types';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 interface RecordItem {
   id: string;
@@ -41,7 +42,7 @@ const PatientMedicalRecords: React.FC = () => {
 
   // SOAP + Prescription Combined Form
   const [formData, setFormData] = useState({
-    visitDate: new Date().toISOString().split('T')[0],
+    visitDate: getCSTDateString(),
     // SOAP fields
     subjective: '',
     objective: '',
@@ -170,7 +171,7 @@ const PatientMedicalRecords: React.FC = () => {
     setEditingType(type);
     setEditingId(null);
     setFormData({
-      visitDate: new Date().toISOString().split('T')[0],
+      visitDate: getCSTDateString(),
       subjective: '',
       objective: '',
       assessment: '',

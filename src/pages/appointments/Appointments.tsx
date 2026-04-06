@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import { Appointment, AppointmentStatus, AppointmentType } from '../../types';
+import { getCSTDateString } from '../../lib/dateUtils';
 
 const Appointments: React.FC = () => {
   const { user } = useAuth();
@@ -82,7 +83,7 @@ const Appointments: React.FC = () => {
     return groups;
   }, {} as Record<string, Appointment[]>);
 
-  const todayCount = appointments.filter(a => a.date === new Date().toISOString().split('T')[0]).length;
+  const todayCount = appointments.filter(a => a.date === getCSTDateString()).length;
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
 
   return (
@@ -147,8 +148,8 @@ const Appointments: React.FC = () => {
           </div>
         ) : (
           Object.entries(groupedAppointments).map(([date, apts]) => {
-            const isToday = date === new Date().toISOString().split('T')[0];
-            const isPast = date < new Date().toISOString().split('T')[0];
+            const isToday = date === getCSTDateString();
+            const isPast = date < getCSTDateString();
 
             return (
               <div key={date}>

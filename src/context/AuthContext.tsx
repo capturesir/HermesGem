@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import { initialUsers, generateId } from '../data/initialData';
+import { getCSTISOString } from '../lib/dateUtils';
 
 interface AuthContextType {
   user: User | null;
@@ -67,8 +68,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       title: userData.title,
       bio: userData.bio,
       gender: userData.gender || 'unspecified',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: getCSTISOString(),
+      updatedAt: getCSTISOString(),
     };
 
     const updatedUsers = [...users, newUser];
@@ -85,7 +86,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updatedUsers[userIndex] = {
       ...updatedUsers[userIndex],
       ...userData,
-      updatedAt: new Date().toISOString(),
+      updatedAt: getCSTISOString(),
     };
 
     setUsers(updatedUsers);
@@ -93,7 +94,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Update current user if it's the same
     if (user && user.id === id) {
-      const updatedUser = { ...user, ...userData, updatedAt: new Date().toISOString() };
+      const updatedUser = { ...user, ...userData, updatedAt: getCSTISOString() };
       setUser(updatedUser);
       localStorage.setItem('emr_current_user', JSON.stringify(updatedUser));
     }
