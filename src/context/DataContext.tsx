@@ -3,7 +3,7 @@ import {
   Patient, Alert, VitalSign, Allergy, SOAPNote, Prescription, Document, Appointment, SystemSettings
 } from '../types';
 import api from '../services/api';
-import { toSnakeCase } from '../lib/apiUtils';
+import { toSnakeCase, toCamelCase } from '../lib/apiUtils';
 import { getCSTISOString } from '../lib/dateUtils';
 
 interface DataContextType {
@@ -105,11 +105,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const [patientsResult, appointmentsResult, settingsResult] = results;
 
       if (patientsResult.status === 'fulfilled') {
-        setPatients((patientsResult.value as { patients: Patient[] }).patients || []);
+        const raw = (patientsResult.value as { patients: unknown[] }).patients || [];
+        setPatients(toCamelCase<Patient[]>(raw));
       }
 
       if (appointmentsResult.status === 'fulfilled') {
-        setAppointments((appointmentsResult.value as { appointments: Appointment[] }).appointments || []);
+        const raw = (appointmentsResult.value as { appointments: unknown[] }).appointments || [];
+        setAppointments(toCamelCase<Appointment[]>(raw));
       }
 
       if (settingsResult.status === 'fulfilled') {
@@ -135,7 +137,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setPatientsLoading(true);
     try {
       const response = await api.getPatients();
-      setPatients(response.patients as Patient[]);
+      const raw = (response as { patients: unknown[] }).patients || [];
+      setPatients(toCamelCase<Patient[]>(raw));
     } catch (error) {
       console.error('Failed to fetch patients:', error);
     } finally {
@@ -148,7 +151,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAppointmentsLoading(true);
     try {
       const response = await api.getAppointments();
-      setAppointments(response.appointments as Appointment[]);
+      const raw = (response as { appointments: unknown[] }).appointments || [];
+      setAppointments(toCamelCase<Appointment[]>(raw));
     } catch (error) {
       console.error('Failed to fetch appointments:', error);
     } finally {
@@ -160,7 +164,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addPatient = async (patient: Partial<Patient>): Promise<Patient> => {
     const snakeCasePatient = toSnakeCase(patient as Record<string, unknown>);
     const created = await api.createPatient(snakeCasePatient);
-    const apiPatient = created as Patient;
+    const apiPatient = toCamelCase<Patient>(created);
     setPatients(prev => [...prev, apiPatient]);
     return apiPatient;
   };
