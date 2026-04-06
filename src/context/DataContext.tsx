@@ -170,15 +170,22 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const updatePatient = async (id: string, patient: Partial<Patient>): Promise<boolean> => {
-    await api.updatePatient(id, patient);
-    setPatients(prev => prev.map(p => p.id === id ? { ...p, ...patient } : p));
+    const snakeCasePatient = toSnakeCase(patient as Record<string, unknown>);
+    await api.updatePatient(id, snakeCasePatient);
+    // Reload fresh data from API to ensure state matches database
+    const response = await api.getPatients();
+    const raw = (response as { patients: unknown[] }).patients || [];
+    setPatients(toCamelCase<Patient[]>(raw));
     return true;
   };
 
   const deletePatient = async (id: string): Promise<boolean> => {
     await api.deletePatient(id);
-    setPatients(prev => prev.filter(p => p.id !== id));
-    // Cascade delete from local state
+    // Reload fresh data from API to ensure state matches database
+    const response = await api.getPatients();
+    const raw = (response as { patients: unknown[] }).patients || [];
+    setPatients(toCamelCase<Patient[]>(raw));
+    // Cascade delete related records from local state
     setAlerts(prev => prev.filter(a => a.patientId !== id));
     setVitalSigns(prev => prev.filter(v => v.patientId !== id));
     setAllergies(prev => prev.filter(a => a.patientId !== id));
@@ -371,7 +378,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const updateAppointment = async (id: string, appointment: Partial<Appointment>): Promise<boolean> => {
     const snakeCaseAppointment = toSnakeCase(appointment as Record<string, unknown>);
     await api.updateAppointment(id, snakeCaseAppointment);
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...appointment } : a));
+    // Reload fresh data from API to ensure state matches database
+    const response = await api.getAppointments();
+    const raw = (response as { appointments: unknown[] }).appointments || [];
+    setAppointments(toCamelCase<Appointment[]>(raw));
     return true;
   };
 
