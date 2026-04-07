@@ -680,7 +680,18 @@ CREATE TABLE audit_logs (
 - **字元集**: utf8mb4
 - **排序**: utf8mb4_unicode_ci
 
-### 11.2 資料表清單
+### 11.2 資料庫 Seed Scripts（獨立可執行）
+
+每次部署後可一鍵注入參考資料，採用 `TRUNCATE + INSERT` 策略（idempotent，重複執行結果一致）。
+
+| Script | 說明 | 執行方式 |
+|--------|------|---------|
+| `data/icd10/seed-icd10.cjs` | ICD-10 疾病分類（WHO 2019，精選 294 筆，涵蓋全 22 章） | `NODE_PATH=./node_modules node ../data/icd10/seed-icd10.cjs` |
+| `data/medications/seed-medications.cjs` | 藥物資料庫（205 筆常見西藥） | `NODE_PATH=./node_modules node ../data/medications/seed-medications.cjs` |
+
+> **idempotent 設計**：每次執行都會先 `TRUNCATE TABLE`（清空舊資料）再完整重新插入，確保開發/投產環境結果一致。
+
+### 11.3 資料表清單
 
 | 資料表 | 說明 |
 |--------|------|
