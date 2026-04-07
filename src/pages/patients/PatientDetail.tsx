@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, AlertTriangle, Activity, Heart,
@@ -7,21 +7,57 @@ import {
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
+import { toCamelCase } from '../../lib/apiUtils';
+import { Alert, VitalSign, Allergy, SOAPNote, Prescription, Document } from '../../types';
 
 const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getPatientById, updatePatient, deletePatient, getAlertsByPatient, getVitalSignsByPatient, getAllergiesByPatient, getSOAPNotesByPatient, getPrescriptionsByPatient, getDocumentsByPatient } = useData();
+  const { getPatientById, updatePatient, deletePatient } = useData();
   const { showToast } = useToast();
 
+  // Per-patient records — loaded from API directly (not from DataContext empty arrays)
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [vitalSigns, setVitalSigns] = useState<VitalSign[]>([]);
+  const [allergies, setAllergies] = useState<Allergy[]>([]);
+  const [soapNotes, setSoapNotes] = useState<SOAPNote[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+
   const patient = getPatientById(id || '');
-  const alerts = getAlertsByPatient(id || '');
-  const vitalSigns = getVitalSignsByPatient(id || '');
-  const allergies = getAllergiesByPatient(id || '');
-  const soapNotes = getSOAPNotesByPatient(id || '');
-  const prescriptions = getPrescriptionsByPatient(id || '');
-  const documents = getDocumentsByPatient(id || '');
+
+  // Load all per-patient records when patient id changes
+  const loadPatientRecords = useCallback(async (patientId: string) => {
+    setRecordsLoading(true);
+    try {
+      const [alertsRes, vitalsRes, allergiesRes, soapRes, rxRes, docsRes] = await Promise.allSettled([
+        api.getAlerts(patientId),
+        api.getVitals(patientId),
+        api.getAllergies(patientId),
+        api.getSOAPNotes(patientId),
+        api.getPrescriptions(patientId),
+        api.getDocuments(patientId),
+      ]);
+
+      if (alertsRes.status === 'fulfilled') setAlerts(toCamelCase<Alert[]>(alertsRes.value as Alert[]));
+      if (vitalsRes.status === 'fulfilled') setVitalSigns(toCamelCase<VitalSign[]>(vitalsRes.value as VitalSign[]));
+      if (allergiesRes.status === 'fulfilled') setAllergies(toCamelCase<Allergy[]>(allergiesRes.value as Allergy[]));
+      if (soapRes.status === 'fulfilled') setSoapNotes(toCamelCase<SOAPNote[]>(soapRes.value as SOAPNote[]));
+      if (rxRes.status === 'fulfilled') setPrescriptions(toCamelCase<Prescription[]>(rxRes.value as Prescription[]));
+      if (docsRes.status === 'fulfilled') setDocuments(toCamelCase<Document[]>(docsRes.value as Document[]));
+    } catch (e) {
+      console.error('Failed to load patient records:', e);
+    } finally {
+      setRecordsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (id) loadPatientRecords(id);
+  }, [id, loadPatientRecords]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
