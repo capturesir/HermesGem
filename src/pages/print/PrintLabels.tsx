@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Printer, Download, Edit, RefreshCw } from 'lucide-react';
 import { useData } from '@/context/DataContext';
-import { getCSTDateString } from '../../lib/dateUtils';
+import { getCSTDateString, toCSTDateString } from '../../lib/dateUtils';
 
 interface LabelContent {
   patientName: string;
@@ -57,7 +57,7 @@ export default function PrintLabels() {
         frequency: medication.frequency,
         duration: `${medication.duration} 天`,
         route: getRouteLabel(medication.route),
-        date: prescription.date,
+        date: toCSTDateString(prescription.date),
         doctorName: prescription.doctorName || '',
         notes: prescription.notes || ''
       });
@@ -185,7 +185,7 @@ export default function PrintLabels() {
           <span class="label-value">${getRouteLabel(med.route)}</span>
         </div>
         <div class="label-footer">
-          日期: ${prescription.date} | 醫生: ${prescription.doctorName || ''}
+          日期: ${toCSTDateString(prescription.date)} | 醫生: ${prescription.doctorName || ''}
         </div>
       </div>
     `).join('');

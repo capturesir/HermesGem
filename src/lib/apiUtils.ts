@@ -21,6 +21,8 @@ export function toCamelCase<T = Record<string, unknown>>(obj: unknown): T {
     return obj.map(item => toCamelCase(item)) as unknown as T;
   }
   if (typeof obj === 'object') {
+    // Preserve Date objects — MySQL2 returns DATE cols as Date objects
+    if (obj instanceof Date) return obj as unknown as T;
     const result: Record<string, unknown> = {};
     for (const key in obj as Record<string, unknown>) {
       const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());

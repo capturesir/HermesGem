@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Calendar, Users, UserCheck, TrendingUp, Activity, Download } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { useAuth } from '@/context/AuthContext';
-import { getCSTDateString } from '../../lib/dateUtils';
+import { getCSTDateString, toCSTDateString } from '../../lib/dateUtils';
 
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
@@ -266,7 +266,7 @@ export default function Statistics() {
                     <tbody>
                       {filteredPatientConsultations.map((apt) => (
                         <tr key={apt.id} className="border-b hover:bg-gray-50">
-                          <td className="py-3 px-4">{apt.date}</td>
+                          <td className="py-3 px-4">{toCSTDateString(apt.date)}</td>
                           <td className="py-3 px-4">{apt.time || '-'}</td>
                           <td className="py-3 px-4">{apt.doctorName || '-'}</td>
                           <td className="py-3 px-4">

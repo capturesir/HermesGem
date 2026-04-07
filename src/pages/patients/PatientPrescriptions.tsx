@@ -5,7 +5,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Prescription, PrescriptionStatus, Medication, MedicationRoute } from '../../types';
-import { getCSTDateString } from '../../lib/dateUtils';
+import { getCSTDateString, toCSTDateString } from '../../lib/dateUtils';
 
 const PatientPrescriptions: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -104,7 +104,7 @@ const PatientPrescriptions: React.FC = () => {
   const handleEdit = (prescription: Prescription) => {
     setEditingPrescription(prescription);
     setFormData({
-      date: prescription.date,
+      date: toCSTDateString(prescription.date),
       medications: prescription.medications.length > 0 ? prescription.medications : [{ name: '', dosage: '', frequency: '', route: 'oral', duration: 7 }],
       status: prescription.status,
       notes: prescription.notes || '',
@@ -348,7 +348,7 @@ const PatientPrescriptions: React.FC = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-3">
-                    <p className="text-lg font-semibold text-slate-900">{prescription.date}</p>
+                    <p className="text-lg font-semibold text-slate-900">{toCSTDateString(prescription.date)}</p>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(prescription.status)}`}>
                       {getStatusText(prescription.status)}
                     </span>

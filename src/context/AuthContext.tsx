@@ -53,6 +53,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.setItem('emr_current_user', JSON.stringify(apiUser));
 
       setUser(apiUser);
+      // Fetch users list after login so user management page works immediately
+      api.getUsers().then((response: unknown) => {
+        const usersData = response as User[];
+        if (Array.isArray(usersData)) setUsers(usersData);
+      }).catch(console.error);
       window.dispatchEvent(new CustomEvent('auth:loginSuccess'));
       return { success: true };
     } catch (err: unknown) {

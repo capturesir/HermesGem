@@ -23,8 +23,16 @@ export function getCSTISOString(): string {
 
 /**
  * 將任意 Date 或 ISO 字串轉換為 CST 日期字串（YYYY-MM-DD）
+ * MySQL2 pool.execute() 返回 DATE 列為 Date 對象（UTC 解釋），
+ * 而 MySQL2 dateStrings 模式返回純日期字串（"2026-04-07"）。
+ * 此函數同時處理兩種情況。
  */
 export function toCSTDateString(date: Date | string): string {
+  // 純日期字串（如 "2026-04-07"）—— MySQL2 dateStrings 模式直接返回
+  // 不包含 T 的字串視為已经是 CST 日期，直接返回
+  if (typeof date === 'string' && !date.includes('T')) {
+    return date;
+  }
   const d = typeof date === 'string' ? new Date(date) : date;
   return new Date(d.getTime() + CST_OFFSET_MS).toISOString().split('T')[0];
 }

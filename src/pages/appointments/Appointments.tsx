@@ -5,7 +5,18 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import { Appointment, AppointmentStatus, AppointmentType } from '../../types';
-import { getCSTDateString } from '../../lib/dateUtils';
+import { getCSTDateString, toCSTDateString } from '../../lib/dateUtils';
+
+// Extract YYYY-MM-DD from a Date object or date string (handles both Date objects from MySQL2 and date strings)
+const getDateKey = (date: Date | string): string => {
+  if (typeof date === 'string') {
+    // If it's already YYYY-MM-DD, return as-is; if ISO string, convert
+    return date.includes('T') ? toCSTDateString(date) : date;
+  }
+  // Date object — use CST offset to get correct calendar date
+  const d = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return d.toISOString().split('T')[0];
+};
 
 const Appointments: React.FC = () => {
   const { user } = useAuth();
@@ -29,11 +40,11 @@ const Appointments: React.FC = () => {
       apt.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.notes?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || apt.status === statusFilter;
-    const matchesDate = !dateFilter || apt.date === dateFilter;
+    const matchesDate = !dateFilter || getDateKey(apt.date) === dateFilter;
 
     return matchesSearch && matchesStatus && matchesDate;
   }).sort((a, b) => {
-    const dateCompare = a.date.localeCompare(b.date);
+    const dateCompare = getDateKey(a.date).localeCompare(getDateKey(b.date));
     if (dateCompare !== 0) return dateCompare;
     return a.time.localeCompare(b.time);
   });
@@ -75,7 +86,7 @@ const Appointments: React.FC = () => {
   };
 
   const groupedAppointments = filteredAppointments.reduce((groups, apt) => {
-    const date = apt.date;
+    const date = getDateKey(apt.date);
     if (!groups[date]) {
       groups[date] = [];
     }
@@ -83,7 +94,7 @@ const Appointments: React.FC = () => {
     return groups;
   }, {} as Record<string, Appointment[]>);
 
-  const todayCount = appointments.filter(a => a.date === getCSTDateString()).length;
+  const todayCount = appointments.filter(a => getDateKey(a.date) === getCSTDateString()).length;
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
 
   return (

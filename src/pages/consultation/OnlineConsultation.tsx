@@ -7,7 +7,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Patient, Appointment, SOAPNote, Prescription, Medication, MedicationRoute } from '../../types';
-import { getCSTDateString } from '../../lib/dateUtils';
+import { getCSTDateString, toCSTDateString } from '../../lib/dateUtils';
 
 interface CurrentConsultation {
   patient: Patient;
@@ -35,7 +35,7 @@ const OnlineConsultation: React.FC = () => {
   // Get waiting list (checked-in appointments for today only)
   const today = getCSTDateString();
   const waitingPatients = appointments
-    .filter(apt => apt.status === 'checked-in' && apt.date === today)
+    .filter(apt => apt.status === 'checked-in' && toCSTDateString(apt.date) === today)
     .map(apt => {
       const patient = getPatientById(apt.patientId);
       return { appointment: apt, patient };
