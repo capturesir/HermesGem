@@ -5,23 +5,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Multer: always use memoryStorage; actual storage destination (R2 vs local) decided in controller
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|ppt|pptx/;
@@ -33,6 +19,45 @@ const upload = multer({
     cb(new Error('不支援的文件格式'));
   }
 });
+
+// --- R2 upload helper (only active when R2_ACCOUNT_ID is configured) ---
+const isR2Configured = () =>
+  process.env.R2_ACCOUNT_ID &&
+  process.env.R2_ACCESS_KEY_ID &&
+  process.env.R2_SECRET_ACCESS_KEY &&
+  process.env.R2_BUCKET &&
+  process.env.R2_PUBLIC_URL;
+
+const uploadToR2 = async (fileBuffer, filename, mimetype) => {
+  const { Upload } = require('@aws-sdk/lib-storage');
+  const r2Client = require('../config/r2');
+  const key = `patient-documents/${Date.now()}-${filename}`;
+  const upload = new Upload({
+    client: r2Client,
+    params: {
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: mimetype,
+    },
+    queueSize: 3,
+  });
+  await upload.done();
+  return `https://${process.env.R2_PUBLIC_URL}/${key}`;
+};
+
+// --- Local disk upload helper (fallback when R2 is not configured) ---
+const uploadToLocal = (fileBuffer, originalname) => {
+  const uploadDir = path.join(__dirname, '../../uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+  const filename = uniqueSuffix + path.extname(originalname);
+  const filePath = path.join(uploadDir, filename);
+  fs.writeFileSync(filePath, fileBuffer);
+  return { filename, fileUrl: `/uploads/${filename}`, filePath };
+};
 
 // Get documents by patient
 const getDocumentsByPatient = async (req, res) => {
@@ -73,7 +98,14 @@ const uploadDocument = async (req, res) => {
     }
 
     const id = generateId();
-    const fileUrl = `/uploads/${req.file.filename}`;
+    let fileUrl;
+
+    if (isR2Configured()) {
+      fileUrl = await uploadToR2(req.file.buffer, req.file.originalname, req.file.mimetype);
+    } else {
+      const { fileUrl: localUrl } = uploadToLocal(req.file.buffer, req.file.originalname);
+      fileUrl = localUrl;
+    }
 
     await pool.execute(
       `INSERT INTO documents (id, patient_id, category, name, file_type, file_url, file_size, uploaded_by, uploaded_at)
@@ -101,7 +133,15 @@ const getDocumentDownload = async (req, res) => {
       return res.status(404).json({ error: '文件不存在' });
     }
 
-    const filePath = path.join(__dirname, '../..', rows[0].file_url);
+    const fileUrl = rows[0].file_url;
+
+    // If it's an R2 URL, redirect to the R2 URL (or return signed URL logic later)
+    if (isR2Configured() && fileUrl.startsWith('https://')) {
+      return res.json({ downloadUrl: fileUrl });
+    }
+
+    // Local file download
+    const filePath = path.join(__dirname, '../..', fileUrl);
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: '文件不存在' });
     }
@@ -123,10 +163,20 @@ const deleteDocument = async (req, res) => {
       return res.status(404).json({ error: '文件不存在' });
     }
 
-    // Delete physical file
-    const filePath = path.join(__dirname, '../..', rows[0].file_url);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    const fileUrl = rows[0].file_url;
+
+    // If R2 URL, delete from R2 (only if configured)
+    if (isR2Configured() && fileUrl.startsWith('https://')) {
+      const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+      const r2Client = require('../config/r2');
+      const key = fileUrl.replace(`https://${process.env.R2_PUBLIC_URL}/`, '');
+      await r2Client.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET, Key: key }));
+    } else {
+      // Local file deletion
+      const filePath = path.join(__dirname, '../..', fileUrl);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
     }
 
     await pool.execute('DELETE FROM documents WHERE id = ?', [id]);

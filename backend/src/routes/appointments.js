@@ -15,5 +15,6 @@ router.put('/:id', requirePermission('appointments', 'edit'), appointmentControl
 router.put('/:id/check-in', appointmentController.checkInAppointment);
 router.put('/:id/complete', appointmentController.completeAppointment);
 router.put('/:id/cancel', appointmentController.cancelAppointment);
+router.delete('/:id', requirePermission('appointments', 'delete'), appointmentController.deleteAppointment);
 
 module.exports = router;

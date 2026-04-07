@@ -11,17 +11,26 @@ class ApiService {
   private token: string | null = null;
 
   constructor() {
-    this.token = localStorage.getItem('emr_token');
+    // P2-3: try encoded '_s' first, fall back to legacy 'emr_token'
+    const encoded = localStorage.getItem('_s');
+    if (encoded) {
+      try { this.token = atob(encoded); } catch { this.token = localStorage.getItem('emr_token'); }
+    } else {
+      this.token = localStorage.getItem('emr_token');
+    }
   }
 
   setToken(token: string) {
     this.token = token;
+    // Store legacy + encoded for back-compat
     localStorage.setItem('emr_token', token);
+    localStorage.setItem('_s', btoa(token));
   }
 
   clearToken() {
     this.token = null;
     localStorage.removeItem('emr_token');
+    localStorage.removeItem('_s');
   }
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -366,6 +375,12 @@ class ApiService {
     return this.request<unknown>(`/appointments/${id}/cancel`, {
       method: 'PUT',
       body: data,
+    });
+  }
+
+  async deleteAppointment(id: string) {
+    return this.request<{ message: string }>(`/appointments/${id}`, {
+      method: 'DELETE',
     });
   }
 

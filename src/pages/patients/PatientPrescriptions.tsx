@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Pill, X, User } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Pill, X, User, Printer } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -122,6 +122,13 @@ const PatientPrescriptions: React.FC = () => {
   const handleStatusChange = (prescription: Prescription, newStatus: PrescriptionStatus) => {
     updatePrescription(prescription.id, { status: newStatus });
     showToast('success', '處方狀態已更新');
+  };
+
+  const handlePrintPrescription = (prescription: Prescription) => {
+    // Store prescription data in sessionStorage for PrintLabels to pick up
+    sessionStorage.setItem('printPrescription', JSON.stringify(prescription));
+    const printUrl = `/print/print-labels`;
+    window.open(printUrl, '_blank');
   };
 
   const getStatusColor = (status: PrescriptionStatus) => {
@@ -360,6 +367,13 @@ const PatientPrescriptions: React.FC = () => {
                 </div>
                 {user?.role !== 'patient' && (
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePrintPrescription(prescription)}
+                      className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="列印藥物標籤"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
                     <select
                       value={prescription.status}
                       onChange={e => handleStatusChange(prescription, e.target.value as PrescriptionStatus)}

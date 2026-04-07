@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, FolderOpen, FileText, Image, File, Upload, X } from 'lucide-react';
 import { useData } from '../../context/DataContext';
@@ -23,6 +23,8 @@ const PatientDocuments: React.FC = () => {
     name: '',
     fileType: 'pdf',
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!patient) {
     return (
@@ -53,7 +55,7 @@ const PatientDocuments: React.FC = () => {
     return <File className="w-8 h-8 text-slate-500" />;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
@@ -61,18 +63,27 @@ const PatientDocuments: React.FC = () => {
       return;
     }
 
-    addDocument({
-      patientId: patient.id,
-      category: formData.category,
-      name: formData.name,
-      fileType: formData.fileType,
-      fileUrl: '', // In a real app, this would be the uploaded file URL
-      uploadedBy: user?.name || '',
-    });
+    if (!selectedFile) {
+      showToast('error', '請選擇要上傳的文件');
+      return;
+    }
 
-    showToast('success', '文件已新增');
-    setShowForm(false);
-    setFormData({ category: 'other', name: '', fileType: 'pdf' });
+    try {
+      await addDocument({
+        patientId: patient.id,
+        category: formData.category,
+        name: formData.name,
+        fileType: selectedFile.type.split('/')[1] || formData.fileType,
+        uploadedBy: user?.name || '',
+      }, selectedFile);
+
+      showToast('success', '文件已上傳');
+      setShowForm(false);
+      setFormData({ category: 'other', name: '', fileType: 'pdf' });
+      setSelectedFile(null);
+    } catch (error) {
+      showToast('error', '上傳失敗');
+    }
   };
 
   const handleDelete = (doc: Document) => {
@@ -218,12 +229,64 @@ const PatientDocuments: React.FC = () => {
                 </select>
               </div>
 
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
-                <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
-                <p className="text-sm text-slate-500">
-                  拖放檔案到這裡上傳<br />
-                  <span className="text-xs">支援 PDF, JPG, PNG, DOCX</span>
-                </p>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  選擇檔案 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setSelectedFile(file);
+                      if (!formData.name.trim()) {
+                        setFormData(prev => ({ ...prev, name: file.name }));
+                      }
+                    }
+                  }}
+                  className="hidden"
+                />
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                    selectedFile
+                      ? 'border-blue-400 bg-blue-50'
+                      : 'border-slate-300 hover:border-blue-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {selectedFile ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <File className="w-8 h-8 text-blue-500" />
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-slate-900">{selectedFile.name}</p>
+                        <p className="text-xs text-slate-500">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedFile(null);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="ml-2 p-1 text-slate-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                      <p className="text-sm text-slate-500">
+                        點擊選擇檔案<br />
+                        <span className="text-xs">支援 PDF, JPG, PNG, DOCX (最大 10MB)</span>
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">

@@ -327,6 +327,31 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
+// Delete appointment
+const deleteAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [existing] = await pool.execute('SELECT * FROM appointments WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ error: '預約不存在' });
+    }
+
+    if (existing[0].status === 'completed') {
+      return res.status(400).json({ error: '已完成的預約無法刪除' });
+    }
+
+    await pool.execute('DELETE FROM appointments WHERE id = ?', [id]);
+
+    await logAudit(req.user.id, 'DELETE', 'appointments', { appointmentId: id }, req.ip);
+
+    res.json({ message: '預約已刪除' });
+  } catch (error) {
+    console.error('Delete appointment error:', error);
+    res.status(500).json({ error: '伺服器錯誤' });
+  }
+};
+
 // Get waiting list (checked-in appointments)
 const getWaitingList = async (req, res) => {
   try {
@@ -364,5 +389,6 @@ module.exports = {
   checkInAppointment,
   completeAppointment,
   cancelAppointment,
+  deleteAppointment,
   getWaitingList
 };

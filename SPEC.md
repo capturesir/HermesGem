@@ -24,8 +24,8 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-07 00:51 (Asia/Macau)
-**Git HEAD**: `1c3a952` — fix: handle undefined parameters in createAppointment (notes, doctor_id)
+**上次檢查**: 2026-04-07 18:08 (Asia/Macau)
+**Git HEAD**: `1e0ea35` — fix: updateAppointment 控制器支持單獨更新 status 欄位
 
 ---
 
@@ -36,10 +36,12 @@ AIGC:
 | ID | 模組 | 問題描述 | 嚴重程度 | 優先順序 | 備註 |
 |----|------|---------|---------|---------|------|
 | #K01 | DataContext | `alerts / vitals / allergies / soap / prescriptions` 後端只有 per-patient 端點，DataContext 初始化時無法預載這些數據，目前為空陣列 | 中 | 中 | 需要新增對應的全域 API 或調整 DataContext 加載策略 |
-| #K02 | Appointments | `deleteAppointment()` 後端 API 不存在，目前只更新本地 state，刪除後不會寫入資料庫 | 高 | 高 | 需要後端新增 `DELETE /appointments/:id` |
-| #K03 | Documents | `addDocument / updateDocument / deleteDocument` 後端無對應 API，目前只操作本地 state | 中 | 中 | 需要後端對應的 documents CRUD API |
+| #K02 | Appointments | ~~`deleteAppointment()` 後端 API 不存在，目前只更新本地 state，刪除後不會寫入資料庫~~ ✅ 已修復 (P0-2) | 高 | 高 | ✅ 已新增 `DELETE /appointments/:id` 路由 |
+| #K03 | Documents | ~~`addDocument` 後端無對應 API~~ ✅ 已修復 (P0-1) | 中 | 中 | ✅ 已使用 `api.uploadDocument(patientId, formData)` |
+| #K05 | 時區 | ~~前端 `new Date().toISOString()` 使用 UTC，後端 `CURDATE()` 使用 CST (+8)，每日 00:00~00:59 會出現 1 天偏差~~ ✅ 已修復 (P0-3) | 中 | 中 | init-data.js 已改用 CST (+8h offset) |
+| #K06 | Appointments | ~~`PUT /appointments/:id/complete` 端點返回 500 伺服器錯誤~~ ✅ 已修復 (commit `1e0ea35`) | 高 | 高 | 控制器已支持單獨更新 status 欄位 |
 | #K04 | 即時同步 | 多人同時使用系統時，無 WebSocket 機制，其他人需要手動刷新才能看到更新 | 高 | 高 | 行業標準：任何資料庫寫入後應即時推送至所有在線客戶端 |
-| #K05 | 時區 | 前端 `new Date().toISOString()` 使用 UTC，后端 `CURDATE()` 使用 CST (+8)，每日 00:00~00:59 會出現 1 天偏差 | 中 | 中 | 需要統一時區處理邏輯 |
+| #K07 | Documents | `DataContext.updateDocument` 只更新本地 state，後端無 `PUT /documents/:id` 端點（文件上傳使用 POST，無單獨更新 metadata 端點） | 低 | 低 | 日後如需更新文件 metadata，需新增對應端點 |
 
 > ⚠️ **日後新增問題**：任何新發現的未完成問題，都必須立即記錄在此區塊，格式同上，不得遺漏。
 

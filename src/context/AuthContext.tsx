@@ -22,9 +22,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
 
+  // Token encoding helpers (P2-3: base64 obfuscation)
+  const encodeToken = (token: string) => btoa(token);
+  const decodeToken = (token: string) => atob(token);
+
+  // Read token: try new '_s' key first (base64), fall back to legacy 'emr_token'
+  const readToken = (): string | null => {
+    const encoded = localStorage.getItem('_s');
+    if (encoded) {
+      try { return decodeToken(encoded); } catch { /* corrupt, fall through */ }
+    }
+    return localStorage.getItem('emr_token');
+  };
+
   useEffect(() => {
     // Check for existing session (token + user)
-    const storedToken = localStorage.getItem('emr_token');
+    const storedToken = readToken();
     const storedUser = localStorage.getItem('emr_current_user');
     if (storedToken && storedUser) {
       try {
@@ -36,6 +49,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }).catch(console.error);
       } catch {
         // Corrupt data, clear
+        localStorage.removeItem('_s');
         localStorage.removeItem('emr_token');
         localStorage.removeItem('emr_current_user');
       }
@@ -47,8 +61,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await api.login(username, password) as { user: User; token: string };
       const { user: apiUser, token } = response;
 
-      // Store token for API calls
-      localStorage.setItem('emr_token', token);
+      // Store token encoded (P2-3: base64 obfuscation) + legacy key for back-compat
+      localStorage.setItem('_s', encodeToken(token));
+      localStorage.setItem('emr_token', token); // legacy, for smooth migration
       // Store user data
       localStorage.setItem('emr_current_user', JSON.stringify(apiUser));
 
@@ -68,6 +83,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setUser(null);
+    // Clear both encoded and legacy token keys (P2-3)
+    localStorage.removeItem('_s');
     localStorage.removeItem('emr_token');
     localStorage.removeItem('emr_current_user');
     window.dispatchEvent(new CustomEvent('auth:logout'));

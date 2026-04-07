@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -42,6 +42,21 @@ export default function PrintLabels() {
 
   // Get all active prescriptions with medications
   const activePrescriptions = prescriptions.filter(p => p.status === 'active');
+
+  // Pre-select prescription from sessionStorage (opened from PatientPrescriptions)
+  useEffect(() => {
+    const stored = sessionStorage.getItem('printPrescription');
+    if (stored) {
+      try {
+        const prescription = JSON.parse(stored);
+        sessionStorage.removeItem('printPrescription');
+        handleSelectPrescription(prescription.id);
+      } catch (e) {
+        // ignore parse errors
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelectPrescription = (prescriptionId: string) => {
     setSelectedPrescription(prescriptionId);

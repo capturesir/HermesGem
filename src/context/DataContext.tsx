@@ -330,7 +330,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Document functions
-  const addDocument = async (document: Partial<Document>): Promise<Document> => {
+  const addDocument = async (document: Partial<Document>, file?: File): Promise<Document> => {
+    if (file && document.patientId) {
+      // Real file upload via API
+      const formData = new FormData();
+      formData.append('category', document.category || 'other');
+      formData.append('name', document.name || file.name);
+      formData.append('date', getCSTISOString());
+      formData.append('file', file);
+      const created = await api.uploadDocument(document.patientId, formData);
+      const apiDocument = toCamelCase<Document>(created as Record<string, unknown>);
+      setDocuments(prev => [...prev, apiDocument]);
+      return apiDocument;
+    }
+
+    // Fallback: metadata-only document (for non-file cases)
     const newDocument: Document = {
       id: Date.now().toString(36) + Math.random().toString(36).substr(2),
       patientId: document.patientId || '',
@@ -386,7 +400,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const deleteAppointment = async (id: string): Promise<boolean> => {
-    // No deleteAppointment API endpoint — update local state only
+    await api.deleteAppointment(id);
     setAppointments(prev => prev.filter(a => a.id !== id));
     return true;
   };

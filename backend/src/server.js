@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Rate limiting (skip in development via skip option in rateLimiter.js)
+app.use('/api/auth/login', authLimiter);
+app.use('/api/', apiLimiter);
 
 // Import routes
 const authRoutes = require('./routes/auth');

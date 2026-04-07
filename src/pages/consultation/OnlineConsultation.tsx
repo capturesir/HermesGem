@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   Users, Activity, Heart, AlertTriangle, Stethoscope, Pill,
-  X, CheckCircle, Clock, ArrowLeft, Save, Plus, Trash2, User
+  X, CheckCircle, Clock, ArrowLeft, Save, Plus, Trash2, User, Search
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Patient, Appointment, SOAPNote, Prescription, Medication, MedicationRoute } from '../../types';
 import { getCSTDateString, toCSTDateString } from '../../lib/dateUtils';
+import api from '../../services/api';
 
 interface CurrentConsultation {
   patient: Patient;
@@ -44,6 +45,18 @@ const OnlineConsultation: React.FC = () => {
 
   const [currentConsultation, setCurrentConsultation] = useState<CurrentConsultation | null>(null);
   const [showConsultationView, setShowConsultationView] = useState(false);
+
+  // ICD-10 typeahead state
+  const [icd10Query, setIcd10Query] = useState('');
+  const [icd10Results, setIcd10Results] = useState<any[]>([]);
+  const [showIcd10Dropdown, setShowIcd10Dropdown] = useState(false);
+  const icd10TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Medication typeahead state (per medication row index)
+  const [medQuery, setMedQuery] = useState<Record<number, string>>({});
+  const [medResults, setMedResults] = useState<Record<number, any[]>>({});
+  const [showMedDropdown, setShowMedDropdown] = useState<Record<number, boolean>>({});
+  const medTimerRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   // SOAP Form State
   const [soapForm, setSoapForm] = useState({
@@ -181,6 +194,63 @@ const OnlineConsultation: React.FC = () => {
       age--;
     }
     return age;
+  };
+
+  // ICD-10 search typeahead
+  const searchICD10 = useCallback((query: string) => {
+    if (icd10TimerRef.current) clearTimeout(icd10TimerRef.current);
+    setIcd10Query(query);
+    if (query.trim().length < 1) {
+      setIcd10Results([]);
+      setShowIcd10Dropdown(false);
+      return;
+    }
+    icd10TimerRef.current = setTimeout(async () => {
+      try {
+        const results = await api.searchICD10(query) as any[];
+        setIcd10Results(results);
+        setShowIcd10Dropdown(true);
+      } catch (e) {
+        setIcd10Results([]);
+      }
+    }, 300);
+  }, []);
+
+  const handleIcd10Select = (code: any) => {
+    const current = soapForm.assessment;
+    const prefix = current ? `${current} ` : '';
+    setSoapForm(prev => ({ ...prev, assessment: `${prefix}[${code.code}] ${code.name_tc}` }));
+    setShowIcd10Dropdown(false);
+    setIcd10Query('');
+  };
+
+  // Medication search typeahead for a specific row
+  const searchMedication = useCallback((query: string, rowIndex: number) => {
+    if (medTimerRef.current[rowIndex]) clearTimeout(medTimerRef.current[rowIndex]);
+    if (query.trim().length < 1) {
+      setMedResults(prev => ({ ...prev, [rowIndex]: [] }));
+      setShowMedDropdown(prev => ({ ...prev, [rowIndex]: false }));
+      return;
+    }
+    medTimerRef.current[rowIndex] = setTimeout(async () => {
+      try {
+        const results = await api.searchMedications(query) as any[];
+        setMedResults(prev => ({ ...prev, [rowIndex]: results }));
+        setShowMedDropdown(prev => ({ ...prev, [rowIndex]: true }));
+      } catch (e) {
+        setMedResults(prev => ({ ...prev, [rowIndex]: [] }));
+      }
+    }, 300);
+  }, []);
+
+  const handleMedSelect = (med: any, rowIndex: number) => {
+    updateMedication(rowIndex, 'name', med.name);
+    if (med.dosage) updateMedication(rowIndex, 'dosage', med.dosage);
+    if (med.frequency) updateMedication(rowIndex, 'frequency', med.frequency);
+    if (med.route) updateMedication(rowIndex, 'route', med.route);
+    // Sync medQuery so the input stays consistent
+    setMedQuery(prev => ({ ...prev, [rowIndex]: med.name }));
+    setShowMedDropdown(prev => ({ ...prev, [rowIndex]: false }));
   };
 
   const getRouteText = (route: MedicationRoute) => {
@@ -430,13 +500,38 @@ const OnlineConsultation: React.FC = () => {
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     A - 評估 <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    value={soapForm.assessment}
-                    onChange={e => setSoapForm(prev => ({ ...prev, assessment: e.target.value }))}
-                    rows={3}
-                    placeholder="診斷意見、病情評估..."
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none resize-none"
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={soapForm.assessment}
+                      onChange={e => {
+                        setSoapForm(prev => ({ ...prev, assessment: e.target.value }));
+                        searchICD10(e.target.value.split(/[\s,]+/).pop() || '');
+                      }}
+                      onBlur={() => setTimeout(() => setShowIcd10Dropdown(false), 200)}
+                      rows={3}
+                      placeholder="診斷意見、病情評估（可輸入ICD-10關鍵字搜尋）..."
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none resize-none"
+                    />
+                    {showIcd10Dropdown && icd10Results.length > 0 && (
+                      <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                        {icd10Results.map((code: any) => (
+                          <button
+                            key={code.id}
+                            type="button"
+                            onMouseDown={() => handleIcd10Select(code)}
+                            className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-slate-100 last:border-0 transition-colors"
+                          >
+                            <span className="font-mono text-blue-600 text-sm mr-2">{code.code}</span>
+                            <span className="text-slate-800 text-sm">{code.name_tc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 mt-1.5">
+                    <Search className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="text-xs text-slate-400">可直接輸入文字，或輸入關鍵字後從下拉選單選擇 ICD-10 疾病</span>
+                  </div>
                 </div>
 
                 <div>
@@ -520,13 +615,36 @@ const OnlineConsultation: React.FC = () => {
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <input
-                            type="text"
-                            value={med.name}
-                            onChange={e => updateMedication(index, 'name', e.target.value)}
-                            placeholder="藥物名稱"
-                            className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none text-sm"
-                          />
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={med.name}
+                              onChange={e => {
+                                updateMedication(index, 'name', e.target.value);
+                                searchMedication(e.target.value, index);
+                              }}
+                              onBlur={() => setTimeout(() => setShowMedDropdown(prev => ({ ...prev, [index]: false })), 200)}
+                              placeholder="藥物名稱（可搜尋）"
+                              className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none text-sm w-full"
+                            />
+                            {showMedDropdown[index] && (medResults[index]?.length ?? 0) > 0 && (
+                              <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                                {(medResults[index] || []).map((m: any) => (
+                                  <button
+                                    key={m.id}
+                                    type="button"
+                                    onMouseDown={() => handleMedSelect(m, index)}
+                                    className="w-full text-left px-3 py-2 hover:bg-purple-50 border-b border-slate-100 last:border-0 transition-colors"
+                                  >
+                                    <p className="text-sm font-medium text-slate-900">{m.name}</p>
+                                    <p className="text-xs text-slate-500">
+                                      {m.dosage || ''} {m.frequency ? `| ${m.frequency}` : ''}
+                                    </p>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                           <input
                             type="text"
                             value={med.dosage}
