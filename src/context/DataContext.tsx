@@ -279,8 +279,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // SOAP Note functions
   const addSOAPNote = async (note: Partial<SOAPNote>): Promise<SOAPNote> => {
-    const created = await api.createSOAPNote(note.patientId!, note);
-    const apiNote = created as SOAPNote;
+    const snakeCaseNote = toSnakeCase(note as Record<string, unknown>);
+    const created = await api.createSOAPNote(note.patientId!, snakeCaseNote);
+    const apiNote = toCamelCase<SOAPNote>(created);
     setSOAPNotes(prev => [...prev, apiNote]);
     return apiNote;
   };
@@ -305,8 +306,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Prescription functions
   const addPrescription = async (prescription: Partial<Prescription>): Promise<Prescription> => {
-    const created = await api.createPrescription(prescription.patientId!, prescription);
-    const apiPrescription = created as Prescription;
+    const snakeCasePrescription = toSnakeCase(prescription as Record<string, unknown>);
+    const created = await api.createPrescription(prescription.patientId!, snakeCasePrescription);
+    const apiPrescription = toCamelCase<Prescription>(created);
     setPrescriptions(prev => [...prev, apiPrescription]);
     return apiPrescription;
   };

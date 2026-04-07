@@ -24,7 +24,9 @@ const getSOAPByPatient = async (req, res) => {
 const createSOAPNote = async (req, res) => {
   try {
     const { patientId } = req.params;
-    const { visit_date, subjective, objective, assessment, plan, notes, appointment_id } = req.body;
+    // Accept both camelCase (appointmentId) and snake_case (appointment_id)
+    const appointmentId = req.body.appointment_id ?? req.body.appointmentId ?? null;
+    const { visit_date, subjective, objective, assessment, plan, notes } = req.body;
 
     if (!visit_date) {
       return res.status(400).json({ error: '就診日期為必填項' });
@@ -34,7 +36,7 @@ const createSOAPNote = async (req, res) => {
     await pool.execute(
       `INSERT INTO soap_notes (id, patient_id, visit_date, subjective, objective, assessment, plan, doctor_id, notes, appointment_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, patientId, visit_date, subjective || '', objective || '', assessment || '', plan || '', req.user.id, notes, appointment_id]
+      [id, patientId, visit_date, subjective || '', objective || '', assessment || '', plan || '', req.user.id, notes ?? null, appointmentId]
     );
 
     await logAudit(req.user.id, 'CREATE', 'soap', { soapId: id, patientId, visit_date }, req.ip);
@@ -164,7 +166,9 @@ const getPrescriptionsByPatient = async (req, res) => {
 const createPrescription = async (req, res) => {
   try {
     const { patientId } = req.params;
-    const { date, medications, status, notes, appointment_id } = req.body;
+    // Accept both camelCase (appointmentId) and snake_case (appointment_id)
+    const appointmentId = req.body.appointment_id ?? req.body.appointmentId ?? null;
+    const { date, medications, status, notes } = req.body;
 
     if (!date) {
       return res.status(400).json({ error: '日期為必填項' });
@@ -178,7 +182,7 @@ const createPrescription = async (req, res) => {
     await pool.execute(
       `INSERT INTO prescriptions (id, patient_id, doctor_id, appointment_id, notes, status, date)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [prescriptionId, patientId, req.user.id, appointment_id, notes, status || 'active', date]
+      [prescriptionId, patientId, req.user.id, appointmentId, notes ?? null, status || 'active', date]
     );
 
     // Insert medications

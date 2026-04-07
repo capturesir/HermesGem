@@ -111,7 +111,7 @@ const OnlineConsultation: React.FC = () => {
     }
   };
 
-  const handleCompleteConsultation = () => {
+  const handleCompleteConsultation = async () => {
     if (!currentConsultation) return;
 
     // Validate required fields
@@ -122,40 +122,45 @@ const OnlineConsultation: React.FC = () => {
 
     const validMeds = prescriptionForm.medications.filter(m => m.name.trim());
 
-    // Create SOAP note
-    addSOAPNote({
-      patientId: currentConsultation.patient.id,
-      visitDate: soapForm.visitDate,
-      subjective: soapForm.subjective,
-      objective: soapForm.objective,
-      assessment: soapForm.assessment,
-      plan: soapForm.plan,
-      notes: soapForm.notes,
-      doctorId: user?.id || '',
-      doctorName: user?.name || '',
-      appointmentId: currentConsultation.appointment.id,
-    });
-
-    // Create prescription if medications are provided
-    if (validMeds.length > 0) {
-      addPrescription({
+    try {
+      // Create SOAP note
+      await addSOAPNote({
         patientId: currentConsultation.patient.id,
-        date: prescriptionForm.date,
-        medications: validMeds,
-        notes: prescriptionForm.notes,
+        visitDate: soapForm.visitDate,
+        subjective: soapForm.subjective,
+        objective: soapForm.objective,
+        assessment: soapForm.assessment,
+        plan: soapForm.plan,
+        notes: soapForm.notes,
         doctorId: user?.id || '',
         doctorName: user?.name || '',
-        status: 'active',
         appointmentId: currentConsultation.appointment.id,
       });
+
+      // Create prescription if medications are provided
+      if (validMeds.length > 0) {
+        await addPrescription({
+          patientId: currentConsultation.patient.id,
+          date: prescriptionForm.date,
+          medications: validMeds,
+          notes: prescriptionForm.notes,
+          doctorId: user?.id || '',
+          doctorName: user?.name || '',
+          status: 'active',
+          appointmentId: currentConsultation.appointment.id,
+        });
+      }
+
+      // Update appointment status to completed
+      await updateAppointment(currentConsultation.appointment.id, { status: 'completed' });
+
+      showToast('success', '診症已完成');
+      setCurrentConsultation(null);
+      setShowConsultationView(false);
+    } catch (err) {
+      console.error('完成診症失敗:', err);
+      showToast('error', '儲存失敗，請重試');
     }
-
-    // Update appointment status to completed
-    updateAppointment(currentConsultation.appointment.id, { status: 'completed' });
-
-    showToast('success', '診症已完成');
-    setCurrentConsultation(null);
-    setShowConsultationView(false);
   };
 
   // Medication helpers
