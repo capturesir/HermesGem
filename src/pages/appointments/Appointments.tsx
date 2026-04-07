@@ -59,11 +59,20 @@ const Appointments: React.FC = () => {
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [cancelReason, setCancelReason] = useState('');
 
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Appointment | null>(null);
+
   const handleDelete = (apt: Appointment) => {
-    if (window.confirm('確定要刪除此預約嗎？')) {
-      deleteAppointment(apt.id);
-      showToast('success', '預約已刪除');
-    }
+    setDeleteTarget(apt);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    deleteAppointment(deleteTarget!.id);
+    showToast('success', '預約已刪除');
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
   };
 
   const openCancelModal = (apt: Appointment) => {
@@ -122,6 +131,32 @@ const Appointments: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-semibold text-slate-900 mb-2">確認刪除</h2>
+            <p className="text-sm text-slate-600 mb-6">
+              確定要刪除此預約嗎？此操作無法撤銷。
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                確認刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cancel Appointment Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
