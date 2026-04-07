@@ -4,7 +4,10 @@
  * 用途：將藥物資料寫入 MySQL medications 表
  * 使用方式：node data/medications/seed-medications.js
  *
- * 獨立執行，無需其他依賴
+ * 策略：Upsert（REPLACE INTO）
+ * → 若 name+generic_name+dosage+route 已存在則自動覆蓋
+ * → 不存在則插入新記錄
+ * → 可保留手動新增的本地藥物資料
  */
 
 const fs = require('fs');
@@ -294,11 +297,7 @@ async function seed() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // 清除舊數據（TRUNCATE = 截断後重新插入，每次執行結果一致）
-    await pool.query('TRUNCATE TABLE medications');
-    console.log('已截斷現有藥物資料（準備重新插入）\n');
-
-    // 批次插入（VALUES 多行一次寫入，效率更高）
+    // Upsert：批次 REPLACE INTO（已存在則覆蓋，保持 UNIQUE key 約束）
     const values = MEDICATIONS.map(med =>
       [med.name, med.generic_name, med.dosage, med.route]
     );
@@ -306,10 +305,10 @@ async function seed() {
     const flatParams = values.flat();
 
     await pool.query(
-      `INSERT INTO medications (id, name, generic_name, dosage, route)\nVALUES ${placeholders}`,
+      `REPLACE INTO medications (id, name, generic_name, dosage, route)\nVALUES ${placeholders}`,
       flatParams
     );
-    console.log(`已寫入 ${MEDICATIONS.length} 筆藥物資料\n`);
+    console.log(`已 Upsert ${MEDICATIONS.length} 筆藥物資料\n`);
 
     // 驗證結果
     const [after] = await pool.query('SELECT COUNT(*) as total FROM medications');

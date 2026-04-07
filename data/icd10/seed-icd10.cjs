@@ -5,8 +5,9 @@
  * 使用方式（從 backend 目錄執行）：
  *   NODE_PATH=./node_modules node ../data/icd10/seed-icd10.cjs
  *
- * 策略：每次執行 TRUNCATE TABLE + 完整重新插入
- * → 結果具有 idempotent（冪等），重複執行結果一致
+ * 策略：Upsert（INSERT ... ON DUPLICATE KEY UPDATE）
+ * → 若 code 已存在則自動更新，不存在則插入新記錄
+ * → 可保留手動新增的本地資料
  */
 
 const mysql = require('mysql2/promise');
@@ -325,20 +326,13 @@ async function seed() {
     const [before] = await pool.query('SELECT COUNT(*) as count FROM icd10_codes');
     console.log(`現有 ICD-10 數量：${before[0].count} 筆\n`);
 
-    // 截斷資料表（每次執行結果一致，支援重複執行）
-    await pool.query('TRUNCATE TABLE icd10_codes');
-    console.log('已截斷資料表（準備重新插入）\n');
-
-    // 批次寫入（id = code，5個欄位）
-    const BATCH = 100;
-    for (let i = 0; i < ICD10_CODES.length; i += BATCH) {
-      const batch = ICD10_CODES.slice(i, i + BATCH);
-      // 每筆記錄：[code, name_tc, name_en, category]，id就用code
-      const vals = batch.map(r => `(?,?,?,?,?)`).join(',');
-      const params = batch.flatMap(r => [r[0], r[0], r[1], r[2], r[3]]);
+    // Upsert：逐筆記錄（code 已有 UNIQUE 約束 uk_code）
+    for (const [code, name_tc, name_en, category] of ICD10_CODES) {
       await pool.query(
-        `INSERT INTO icd10_codes (id, code, name_tc, name_en, category) VALUES ${vals}`,
-        params
+        `INSERT INTO icd10_codes (id, code, name_tc, name_en, category)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE name_tc=VALUES(name_tc), name_en=VALUES(name_en), category=VALUES(category)`,
+        [code, code, name_tc, name_en, category]
       );
     }
 
