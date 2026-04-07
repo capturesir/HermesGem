@@ -68,11 +68,16 @@ const Appointments: React.FC = () => {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    deleteAppointment(deleteTarget!.id);
-    showToast('success', '預約已刪除');
-    setShowDeleteModal(false);
-    setDeleteTarget(null);
+  const confirmDelete = async () => {
+    try {
+      await deleteAppointment(deleteTarget!.id);
+      showToast('success', '預約已刪除');
+    } catch (err) {
+      showToast('error', '刪除失敗，請確保您有權限');
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+    }
   };
 
   const openCancelModal = (apt: Appointment) => {
