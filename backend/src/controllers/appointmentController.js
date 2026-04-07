@@ -151,17 +151,31 @@ const createAppointment = async (req, res) => {
 const updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { doctor_id, date, time, type, notes } = req.body;
+    const { doctor_id, date, time, type, notes, status } = req.body;
 
     const [existing] = await pool.execute('SELECT * FROM appointments WHERE id = ?', [id]);
     if (existing.length === 0) {
       return res.status(404).json({ error: '預約不存在' });
     }
 
+    // Dynamically build SET clause only for fields that are provided
+    const fields = [];
+    const values = [];
+    if (doctor_id !== undefined) { fields.push('doctor_id = ?'); values.push(doctor_id); }
+    if (date !== undefined) { fields.push('date = ?'); values.push(date); }
+    if (time !== undefined) { fields.push('time = ?'); values.push(time); }
+    if (type !== undefined) { fields.push('type = ?'); values.push(type); }
+    if (notes !== undefined) { fields.push('notes = ?'); values.push(notes); }
+    if (status !== undefined) { fields.push('status = ?'); values.push(status); }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ error: '沒有提供任何要更新的欄位' });
+    }
+
+    values.push(id);
     await pool.execute(
-      `UPDATE appointments SET doctor_id = ?, date = ?, time = ?, type = ?, notes = ?, updated_at = NOW()
-       WHERE id = ?`,
-      [doctor_id, date, time, type, notes, id]
+      `UPDATE appointments SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ?`,
+      values
     );
 
     await logAudit(req.user.id, 'UPDATE', 'appointments', { appointmentId: id }, req.ip);
