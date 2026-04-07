@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Edit, Trash2, Stethoscope, Pill, X, User,
@@ -8,6 +8,8 @@ import {
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
+import { toCamelCase } from '../../lib/apiUtils';
 import { SOAPNote, Prescription, PrescriptionStatus, Medication, MedicationRoute } from '../../types';
 import { getCSTDateString } from '../../lib/dateUtils';
 
@@ -22,12 +24,29 @@ interface RecordItem {
 const PatientMedicalRecords: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getPatientById, getSOAPNotesByPatient, getPrescriptionsByPatient, addSOAPNote, updateSOAPNote, deleteSOAPNote, addPrescription, updatePrescription, deletePrescription } = useData();
+  const { getPatientById, addSOAPNote, updateSOAPNote, deleteSOAPNote, addPrescription, updatePrescription, deletePrescription } = useData();
   const { showToast } = useToast();
 
+  const [soapNotes, setSoapNotes] = useState<SOAPNote[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const patient = getPatientById(id || '');
-  const soapNotes = getSOAPNotesByPatient(id || '');
-  const prescriptions = getPrescriptionsByPatient(id || '');
+
+  const loadRecords = useCallback(async (patientId: string) => {
+    try {
+      const [soapRes, rxRes] = await Promise.allSettled([
+        api.getSOAPNotes(patientId),
+        api.getPrescriptions(patientId),
+      ]);
+      if (soapRes.status === 'fulfilled') setSoapNotes(toCamelCase<SOAPNote[]>(soapRes.value as SOAPNote[]));
+      if (rxRes.status === 'fulfilled') setPrescriptions(toCamelCase<Prescription[]>(rxRes.value as Prescription[]));
+    } catch (e) {
+      console.error('Failed to load medical records:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (id) loadRecords(id);
+  }, [id, loadRecords]);
 
   const [activeTab, setActiveTab] = useState<'all' | 'soap' | 'prescription'>('all');
   const [searchQuery, setSearchQuery] = useState('');

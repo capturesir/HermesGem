@@ -1,20 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Pill, X, User, Printer } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
+import { toCamelCase } from '../../lib/apiUtils';
 import { Prescription, PrescriptionStatus, Medication, MedicationRoute } from '../../types';
 import { getCSTDateString, toCSTDateString } from '../../lib/dateUtils';
 
 const PatientPrescriptions: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getPatientById, getPrescriptionsByPatient, addPrescription, updatePrescription, deletePrescription } = useData();
+  const { getPatientById, addPrescription, updatePrescription, deletePrescription } = useData();
   const { showToast } = useToast();
 
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const patient = getPatientById(id || '');
-  const prescriptions = getPrescriptionsByPatient(id || '');
+
+  const loadPrescriptions = useCallback(async (patientId: string) => {
+    try {
+      const data = await api.getPrescriptions(patientId);
+      setPrescriptions(toCamelCase<Prescription[]>(data as Prescription[]));
+    } catch (e) {
+      console.error('Failed to load prescriptions:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (id) loadPrescriptions(id);
+  }, [id, loadPrescriptions]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);

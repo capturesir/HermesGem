@@ -1,20 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Activity, X, Thermometer, Droplets, Wind, Heart, Scale, Ruler } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
+import { toCamelCase } from '../../lib/apiUtils';
 import { VitalSign } from '../../types';
 import { formatDateCST, formatTimeCST } from '../../lib/dateUtils';
 
 const PatientVitals: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getPatientById, getVitalSignsByPatient, addVitalSign, updateVitalSign, deleteVitalSign } = useData();
+  const { getPatientById, addVitalSign, updateVitalSign, deleteVitalSign } = useData();
   const { showToast } = useToast();
 
+  const [vitalSigns, setVitalSigns] = useState<VitalSign[]>([]);
   const patient = getPatientById(id || '');
-  const vitalSigns = getVitalSignsByPatient(id || '');
+
+  const loadVitals = useCallback(async (patientId: string) => {
+    try {
+      const data = await api.getVitals(patientId);
+      setVitalSigns(toCamelCase<VitalSign[]>(data as VitalSign[]));
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { if (id) loadVitals(id); }, [id, loadVitals]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingVitals, setEditingVitals] = useState<VitalSign | null>(null);

@@ -1,21 +1,32 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, FolderOpen, FileText, Image, File, Upload, X } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
+import { toCamelCase } from '../../lib/apiUtils';
 import { Document, DocumentCategory } from '../../types';
 import { formatDateCST, formatTimeCST } from '../../lib/dateUtils';
 
 const PatientDocuments: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getPatientById, getDocumentsByPatient, getDocumentsByCategory, addDocument, deleteDocument } = useData();
+  const { getPatientById, addDocument, deleteDocument } = useData();
   const { showToast } = useToast();
 
+  const [documents, setDocuments] = useState<Document[]>([]);
   const patient = getPatientById(id || '');
-  const documents = getDocumentsByPatient(id || '');
   const [selectedCategory, setSelectedCategory] = useState<DocumentCategory | 'all'>('all');
+
+  const loadDocuments = useCallback(async (patientId: string) => {
+    try {
+      const data = await api.getDocuments(patientId);
+      setDocuments(toCamelCase<Document[]>(data as Document[]));
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { if (id) loadDocuments(id); }, [id, loadDocuments]);
 
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({

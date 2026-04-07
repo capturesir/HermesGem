@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, AlertTriangle, ToggleLeft, ToggleRight, X } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
+import { toCamelCase } from '../../lib/apiUtils';
 import { Alert, AlertLevel, AlertType } from '../../types';
 import { formatDateCST, formatTimeCST } from '../../lib/dateUtils';
 
 const PatientAlerts: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getPatientById, getAlertsByPatient, addAlert, updateAlert, deleteAlert } = useData();
+  const { getPatientById, addAlert, updateAlert, deleteAlert } = useData();
   const { showToast } = useToast();
 
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const patient = getPatientById(id || '');
-  const alerts = getAlertsByPatient(id || '');
+
+  const loadAlerts = useCallback(async (patientId: string) => {
+    try {
+      const data = await api.getAlerts(patientId);
+      setAlerts(toCamelCase<Alert[]>(data as Alert[]));
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { if (id) loadAlerts(id); }, [id, loadAlerts]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null);

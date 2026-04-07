@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Heart, X } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
+import { toCamelCase } from '../../lib/apiUtils';
 import { Allergy, AllergyType, AllergySeverity } from '../../types';
 import { formatDateCST, formatTimeCST } from '../../lib/dateUtils';
 
 const PatientAllergies: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getPatientById, getAllergiesByPatient, addAllergy, updateAllergy, deleteAllergy } = useData();
+  const { getPatientById, addAllergy, updateAllergy, deleteAllergy } = useData();
   const { showToast } = useToast();
 
+  const [allergies, setAllergies] = useState<Allergy[]>([]);
   const patient = getPatientById(id || '');
-  const allergies = getAllergiesByPatient(id || '');
+
+  const loadAllergies = useCallback(async (patientId: string) => {
+    try {
+      const data = await api.getAllergies(patientId);
+      setAllergies(toCamelCase<Allergy[]>(data as Allergy[]));
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { if (id) loadAllergies(id); }, [id, loadAllergies]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingAllergy, setEditingAllergy] = useState<Allergy | null>(null);

@@ -1,20 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Stethoscope, X, User } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
+import { toCamelCase } from '../../lib/apiUtils';
 import { SOAPNote } from '../../types';
 import { getCSTDateString } from '../../lib/dateUtils';
 
 const PatientSOAP: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getPatientById, getSOAPNotesByPatient, addSOAPNote, updateSOAPNote, deleteSOAPNote } = useData();
+  const { getPatientById, addSOAPNote, updateSOAPNote, deleteSOAPNote } = useData();
   const { showToast } = useToast();
 
+  const [soapNotes, setSoapNotes] = useState<SOAPNote[]>([]);
   const patient = getPatientById(id || '');
-  const soapNotes = getSOAPNotesByPatient(id || '');
+
+  const loadSOAPNotes = useCallback(async (patientId: string) => {
+    try {
+      const data = await api.getSOAPNotes(patientId);
+      setSoapNotes(toCamelCase<SOAPNote[]>(data as SOAPNote[]));
+    } catch (e) {
+      console.error('Failed to load SOAP notes:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (id) loadSOAPNotes(id);
+  }, [id, loadSOAPNotes]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingNote, setEditingNote] = useState<SOAPNote | null>(null);
