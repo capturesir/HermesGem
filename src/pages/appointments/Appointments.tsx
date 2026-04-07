@@ -54,11 +54,34 @@ const Appointments: React.FC = () => {
     showToast('success', '預約狀態已更新');
   };
 
+  // Cancel modal state
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+
   const handleDelete = (apt: Appointment) => {
     if (window.confirm('確定要刪除此預約嗎？')) {
       deleteAppointment(apt.id);
       showToast('success', '預約已刪除');
     }
+  };
+
+  const openCancelModal = (apt: Appointment) => {
+    setCancelTarget(apt);
+    setCancelReason('');
+    setShowCancelModal(true);
+  };
+
+  const confirmCancel = () => {
+    if (!cancelReason.trim()) {
+      showToast('error', '請填寫取消原因');
+      return;
+    }
+    updateAppointment(cancelTarget!.id, { status: 'cancelled', cancelReason: cancelReason.trim() });
+    showToast('success', '預約已取消');
+    setShowCancelModal(false);
+    setCancelTarget(null);
+    setCancelReason('');
   };
 
   const getStatusConfig = (status: AppointmentStatus) => {
@@ -99,6 +122,43 @@ const Appointments: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
+      {/* Cancel Appointment Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-md p-6">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">取消預約</h2>
+            <p className="text-sm text-slate-600 mb-4">
+              取消預約需要填寫原因，取消後將通知病人。
+            </p>
+            <div className="mb-1">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                取消原因 <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+                rows={3}
+                placeholder="請輸入取消原因..."
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none resize-none"
+              />
+            </div>
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                返回
+              </button>
+              <button
+                onClick={confirmCancel}
+                className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                確認取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -228,17 +288,9 @@ const Appointments: React.FC = () => {
                                   確認並報到
                                 </button>
                               )}
-                              {apt.status === 'checked-in' && (
-                                <button
-                                  onClick={() => handleStatusChange(apt, 'completed')}
-                                  className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                >
-                                  完成
-                                </button>
-                              )}
                               {apt.status !== 'cancelled' && apt.status !== 'completed' && (
                                 <button
-                                  onClick={() => handleStatusChange(apt, 'cancelled')}
+                                  onClick={() => openCancelModal(apt)}
                                   className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                                 >
                                   取消
