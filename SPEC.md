@@ -25,7 +25,7 @@ AIGC:
 | 前端服務 | ✅ 運行中 (port 5176) |
 
 **上次檢查**: 2026-04-07 00:51 (Asia/Macau)
-**Git HEAD**: `48d940c` — fix: refactor DataContext to load all data from API only, remove localStorage fallback
+**Git HEAD**: `1c3a952` — fix: handle undefined parameters in createAppointment (notes, doctor_id)
 
 ---
 
@@ -413,6 +413,7 @@ CREATE TABLE prescriptions (
   patient_id VARCHAR(36) NOT NULL,
   doctor_id VARCHAR(36) NOT NULL,
   appointment_id VARCHAR(36),
+  date DATE NOT NULL,
   notes TEXT,
   status ENUM('active', 'filled', 'expired') DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -455,7 +456,7 @@ CREATE TABLE appointments (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-  FOREIGN KEY (doctor_id) REFERENCES users(id)
+  FOREIGN KEY (doctor_id) REFERENCES users(id) ON DELETE SET NULL
 );
 ```
 
@@ -588,7 +589,7 @@ CREATE TABLE audit_logs (
 | GET | /api/patients/:id/documents | 獲取文件列表 |
 | POST | /api/patients/:id/documents | 上傳文件 |
 | GET | /api/documents/:id/download | 下載文件 |
-| DELETE | /api/documents/:id | 刪除文件 |
+| DELETE | /api/patients/:patientId/documents/:id | 刪除文件 |
 
 ### 6.7 預約管理
 | 方法 | 端點 | 說明 |
@@ -605,8 +606,10 @@ CREATE TABLE audit_logs (
 ### 6.8 查找功能
 | 方法 | 端點 | 說明 |
 |------|------|------|
-| GET | /api/icd10/search?q= | ICD-10 搜尋 |
-| GET | /api/medications/search?q= | 藥物資料搜尋 |
+| GET | /api/lookup/icd10 | 獲取所有 ICD-10 |
+| GET | /api/lookup/icd10/search | ICD-10 搜尋 |
+| GET | /api/lookup/medications | 獲取所有藥物 |
+| GET | /api/lookup/medications/search | 藥物資料搜尋 |
 
 ### 6.9 統計
 | 方法 | 端點 | 說明 |
