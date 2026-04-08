@@ -6,7 +6,7 @@ import { useToast } from '../../context/ToastContext';
 
 const PatientForm: React.FC = () => {
   const navigate = useNavigate();
-  const { addPatient, patients } = useData();
+  const { addPatient, patients, refreshPatients } = useData();
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -67,6 +67,7 @@ const PatientForm: React.FC = () => {
 
     try {
       const patient = await addPatient(formData);
+      await refreshPatients();
       showToast('success', `病人「${formData.name}」已成功建立`);
       navigate(`/patients/${patient.id}`);
     } catch (error) {

@@ -10,7 +10,7 @@ import { getCSTDateString } from '../../lib/dateUtils';
 const AppointmentForm: React.FC = () => {
   const navigate = useNavigate();
   const { user, users } = useAuth();
-  const { patients, getPatientById, getPatientByNumber, addAppointment } = useData();
+  const { patients, getPatientById, getPatientByNumber, addAppointment, refreshAppointments } = useData();
   const { showToast } = useToast();
 
   const doctors = users.filter(u => u.role === 'doctor');
@@ -112,6 +112,7 @@ const AppointmentForm: React.FC = () => {
         patientId: formData.patientId,
         patientName: formData.patientName,
       });
+      await refreshAppointments();
       showToast('success', '預約已成功建立');
       navigate('/appointments');
     } catch (error: unknown) {
