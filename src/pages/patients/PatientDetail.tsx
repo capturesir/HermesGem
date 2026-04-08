@@ -67,6 +67,7 @@ const PatientDetail: React.FC = () => {
     phone: patient?.phone || '',
     email: patient?.email || '',
     address: patient?.address || '',
+    idCard: patient?.idCard || '',
   });
 
   if (!patient) {
@@ -89,19 +90,24 @@ const PatientDetail: React.FC = () => {
         phone: patient.phone || '',
         email: patient.email || '',
         address: patient.address || '',
+        idCard: patient.idCard || '',
       });
     }
     setIsEditing(!isEditing);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim()) {
       showToast('error', '姓名為必填項');
       return;
     }
-    updatePatient(patient.id, formData);
-    showToast('success', '病人資料已更新');
-    setIsEditing(false);
+    try {
+      await updatePatient(patient.id, formData);
+      showToast('success', '病人資料已更新');
+      setIsEditing(false);
+    } catch {
+      showToast('error', '更新失敗，請稍後再試');
+    }
   };
 
   const handleDelete = () => {
@@ -375,7 +381,17 @@ const PatientDetail: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">身份證號</span>
-                <span className="text-slate-900">{patient.idCard || '-'}</span>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="idCard"
+                    value={formData.idCard}
+                    onChange={handleChange}
+                    className="text-sm border border-slate-300 rounded px-2 py-1"
+                  />
+                ) : (
+                  <span className="text-slate-900">{patient.idCard || '-'}</span>
+                )}
               </div>
               <div className="pt-3 border-t border-slate-100">
                 <span className="text-slate-500">地址</span>
