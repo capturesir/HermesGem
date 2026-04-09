@@ -162,37 +162,46 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Patient functions
   const addPatient = async (patient: Partial<Patient>): Promise<Patient> => {
-    const snakeCasePatient = toSnakeCase(patient as Record<string, unknown>);
-    const created = await api.createPatient(snakeCasePatient);
-    const apiPatient = toCamelCase<Patient>(created);
-    setPatients(prev => [...prev, apiPatient]);
-    return apiPatient;
+    try {
+      const snakeCasePatient = toSnakeCase(patient as Record<string, unknown>);
+      const created = await api.createPatient(snakeCasePatient);
+      const apiPatient = toCamelCase<Patient>(created);
+      setPatients(prev => [...prev, apiPatient]);
+      return apiPatient;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const updatePatient = async (id: string, patient: Partial<Patient>): Promise<boolean> => {
-    const snakeCasePatient = toSnakeCase(patient as Record<string, unknown>);
-    await api.updatePatient(id, snakeCasePatient);
-    // Reload fresh data from API to ensure state matches database
-    const response = await api.getPatients();
-    const raw = (response as { patients: unknown[] }).patients || [];
-    setPatients(toCamelCase<Patient[]>(raw));
-    return true;
+    try {
+      const snakeCasePatient = toSnakeCase(patient as Record<string, unknown>);
+      await api.updatePatient(id, snakeCasePatient);
+      const response = await api.getPatients();
+      const raw = (response as { patients: unknown[] }).patients || [];
+      setPatients(toCamelCase<Patient[]>(raw));
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const deletePatient = async (id: string): Promise<boolean> => {
-    await api.deletePatient(id);
-    // Reload fresh data from API to ensure state matches database
-    const response = await api.getPatients();
-    const raw = (response as { patients: unknown[] }).patients || [];
-    setPatients(toCamelCase<Patient[]>(raw));
-    // Cascade delete related records from local state
-    setAlerts(prev => prev.filter(a => a.patientId !== id));
-    setVitalSigns(prev => prev.filter(v => v.patientId !== id));
-    setAllergies(prev => prev.filter(a => a.patientId !== id));
-    setSOAPNotes(prev => prev.filter(s => s.patientId !== id));
-    setPrescriptions(prev => prev.filter(p => p.patientId !== id));
-    setDocuments(prev => prev.filter(d => d.patientId !== id));
-    return true;
+    try {
+      await api.deletePatient(id);
+      const response = await api.getPatients();
+      const raw = (response as { patients: unknown[] }).patients || [];
+      setPatients(toCamelCase<Patient[]>(raw));
+      setAlerts(prev => prev.filter(a => a.patientId !== id));
+      setVitalSigns(prev => prev.filter(v => v.patientId !== id));
+      setAllergies(prev => prev.filter(a => a.patientId !== id));
+      setSOAPNotes(prev => prev.filter(s => s.patientId !== id));
+      setPrescriptions(prev => prev.filter(p => p.patientId !== id));
+      setDocuments(prev => prev.filter(d => d.patientId !== id));
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const getPatientById = (id: string): Patient | undefined => {
@@ -205,22 +214,34 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Alert functions
   const addAlert = async (alert: Partial<Alert>): Promise<Alert> => {
-    const created = await api.createAlert(alert.patientId!, alert);
-    const apiAlert = created as Alert;
-    setAlerts(prev => [...prev, apiAlert]);
-    return apiAlert;
+    try {
+      const created = await api.createAlert(alert.patientId!, alert);
+      const apiAlert = created as Alert;
+      setAlerts(prev => [...prev, apiAlert]);
+      return apiAlert;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const updateAlert = async (id: string, alert: Partial<Alert>): Promise<boolean> => {
-    await api.updateAlert(id, alert);
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, ...alert } : a));
-    return true;
+    try {
+      await api.updateAlert(id, alert);
+      setAlerts(prev => prev.map(a => a.id === id ? { ...a, ...alert } : a));
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const deleteAlert = async (id: string): Promise<boolean> => {
-    await api.deleteAlert(id);
-    setAlerts(prev => prev.filter(a => a.id !== id));
-    return true;
+    try {
+      await api.deleteAlert(id);
+      setAlerts(prev => prev.filter(a => a.id !== id));
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const getAlertsByPatient = (patientId: string): Alert[] => {
@@ -279,23 +300,41 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // SOAP Note functions
   const addSOAPNote = async (note: Partial<SOAPNote>): Promise<SOAPNote> => {
-    const snakeCaseNote = toSnakeCase(note as Record<string, unknown>);
-    const created = await api.createSOAPNote(note.patientId!, snakeCaseNote);
-    const apiNote = toCamelCase<SOAPNote>(created);
-    setSOAPNotes(prev => [...prev, apiNote]);
-    return apiNote;
+    try {
+      const snakeCaseNote = toSnakeCase(note as Record<string, unknown>);
+      const created = await api.createSOAPNote(note.patientId!, snakeCaseNote);
+      const apiNote = toCamelCase<SOAPNote>(created);
+      setSOAPNotes(prev => [...prev, apiNote]);
+      return apiNote;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const updateSOAPNote = async (id: string, note: Partial<SOAPNote>): Promise<boolean> => {
-    await api.updateSOAPNote(id, note);
-    setSOAPNotes(prev => prev.map(s => s.id === id ? { ...s, ...note } : s));
-    return true;
+    try {
+      const snakeCaseNote = toSnakeCase(note as Record<string, unknown>);
+      await api.updateSOAPNote(id, snakeCaseNote);
+      setSOAPNotes(prev => prev.map(s => s.id === id ? { ...s, ...note } : s));
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const deleteSOAPNote = async (id: string): Promise<boolean> => {
-    await api.deleteSOAPNote(id);
-    setSOAPNotes(prev => prev.filter(s => s.id !== id));
-    return true;
+    let removed: SOAPNote | undefined;
+    setSOAPNotes(prev => {
+      removed = prev.find(s => s.id === id);
+      return prev.filter(s => s.id !== id);
+    });
+    try {
+      await api.deleteSOAPNote(id);
+      return true;
+    } catch (error) {
+      if (removed) setSOAPNotes(prev => [...prev, removed!]);
+      throw error;
+    }
   };
 
   const getSOAPNotesByPatient = (patientId: string): SOAPNote[] => {
@@ -306,23 +345,41 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Prescription functions
   const addPrescription = async (prescription: Partial<Prescription>): Promise<Prescription> => {
-    const snakeCasePrescription = toSnakeCase(prescription as Record<string, unknown>);
-    const created = await api.createPrescription(prescription.patientId!, snakeCasePrescription);
-    const apiPrescription = toCamelCase<Prescription>(created);
-    setPrescriptions(prev => [...prev, apiPrescription]);
-    return apiPrescription;
+    try {
+      const snakeCasePrescription = toSnakeCase(prescription as Record<string, unknown>);
+      const created = await api.createPrescription(prescription.patientId!, snakeCasePrescription);
+      const apiPrescription = toCamelCase<Prescription>(created);
+      setPrescriptions(prev => [...prev, apiPrescription]);
+      return apiPrescription;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const updatePrescription = async (id: string, prescription: Partial<Prescription>): Promise<boolean> => {
-    await api.updatePrescription(id, prescription);
-    setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, ...prescription } : p));
-    return true;
+    try {
+      const snakeCaseRx = toSnakeCase(prescription as Record<string, unknown>);
+      await api.updatePrescription(id, snakeCaseRx);
+      setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, ...prescription } : p));
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const deletePrescription = async (id: string): Promise<boolean> => {
-    await api.deletePrescription(id);
-    setPrescriptions(prev => prev.filter(p => p.id !== id));
-    return true;
+    let removed: Prescription | undefined;
+    setPrescriptions(prev => {
+      removed = prev.find(p => p.id === id);
+      return prev.filter(p => p.id !== id);
+    });
+    try {
+      await api.deletePrescription(id);
+      return true;
+    } catch (error) {
+      if (removed) setPrescriptions(prev => [...prev, removed!]);
+      throw error;
+    }
   };
 
   const getPrescriptionsByPatient = (patientId: string): Prescription[] => {
@@ -367,9 +424,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const deleteDocument = async (id: string): Promise<boolean> => {
-    await api.deleteDocument(id);
-    setDocuments(prev => prev.filter(d => d.id !== id));
-    return true;
+    let removed: Document | undefined;
+    setDocuments(prev => {
+      removed = prev.find(d => d.id === id);
+      return prev.filter(d => d.id !== id);
+    });
+    try {
+      await api.deleteDocument(id);
+      return true;
+    } catch (error) {
+      if (removed) setDocuments(prev => [...prev, removed!]);
+      throw error;
+    }
   };
 
   const getDocumentsByPatient = (patientId: string): Document[] => {
@@ -384,27 +450,45 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Appointment functions
   const addAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
-    const snakeCaseAppointment = toSnakeCase(appointment as Record<string, unknown>);
-    const created = await api.createAppointment(snakeCaseAppointment);
-    const apiAppointment = created as Appointment;
-    setAppointments(prev => [...prev, apiAppointment]);
-    return apiAppointment;
+    try {
+      const snakeCaseAppointment = toSnakeCase(appointment as Record<string, unknown>);
+      const created = await api.createAppointment(snakeCaseAppointment);
+      const apiAppointment = created as Appointment;
+      setAppointments(prev => [...prev, apiAppointment]);
+      return apiAppointment;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const updateAppointment = async (id: string, appointment: Partial<Appointment>): Promise<boolean> => {
-    const snakeCaseAppointment = toSnakeCase(appointment as Record<string, unknown>);
-    await api.updateAppointment(id, snakeCaseAppointment);
-    // Reload fresh data from API to ensure state matches database
-    const response = await api.getAppointments();
-    const raw = (response as { appointments: unknown[] }).appointments || [];
-    setAppointments(toCamelCase<Appointment[]>(raw));
-    return true;
+    try {
+      const snakeCaseAppointment = toSnakeCase(appointment as Record<string, unknown>);
+      await api.updateAppointment(id, snakeCaseAppointment);
+      const response = await api.getAppointments();
+      const raw = (response as { appointments: unknown[] }).appointments || [];
+      setAppointments(toCamelCase<Appointment[]>(raw));
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const deleteAppointment = async (id: string): Promise<boolean> => {
-    await api.deleteAppointment(id);
-    setAppointments(prev => prev.filter(a => a.id !== id));
-    return true;
+    // Optimistic delete
+    let removed: Appointment | undefined;
+    setAppointments(prev => {
+      removed = prev.find(a => a.id === id);
+      return prev.filter(a => a.id !== id);
+    });
+    try {
+      await api.deleteAppointment(id);
+      return true;
+    } catch (error) {
+      // Rollback
+      if (removed) setAppointments(prev => [...prev, removed!]);
+      throw error;
+    }
   };
 
   const getAppointmentsByPatient = (patientId: string): Appointment[] => {

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Search, Calendar as CalendarIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
 import { AppointmentType } from '../../types';
 import { getCSTDateString } from '../../lib/dateUtils';
 
@@ -14,6 +15,13 @@ const AppointmentForm: React.FC = () => {
   const { showToast } = useToast();
 
   const doctors = users.filter(u => u.role === 'doctor');
+
+  // Ensure users are loaded (fixes empty doctor dropdown after fresh login)
+  useEffect(() => {
+    if (users.length === 0) {
+      api.getUsers().catch(() => {});
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     patientNumber: '',

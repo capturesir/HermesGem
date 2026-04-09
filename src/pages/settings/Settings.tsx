@@ -34,12 +34,14 @@ const Settings: React.FC = () => {
   ];
 
   const getPermission = (role: UserRole, module: string) => {
-    const perm = settings.permissions.find(p => p.role === role && p.module === module);
+    const permissions = settings.permissions || [];
+    const perm = permissions.find(p => p.role === role && p.module === module);
     return perm || { view: false, edit: false, delete: false };
   };
 
   const updatePermission = (role: UserRole, module: string, action: 'view' | 'edit' | 'delete', value: boolean) => {
-    const newPermissions = [...settings.permissions];
+    const permissions = settings.permissions || [];
+    const newPermissions = [...permissions];
     const index = newPermissions.findIndex(p => p.role === role && p.module === module);
 
     if (index >= 0) {

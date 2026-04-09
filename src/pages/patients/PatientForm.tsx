@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
 const PatientForm: React.FC = () => {
   const navigate = useNavigate();
   const { addPatient, patients, refreshPatients } = useData();
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     patientNumber: '',
@@ -69,7 +71,7 @@ const PatientForm: React.FC = () => {
       const patient = await addPatient(formData);
       await refreshPatients();
       showToast('success', `病人「${formData.name}」已成功建立`);
-      navigate(`/patients/${patient.id}`);
+      navigate(user?.role === 'admin' ? `/patients/${patient.id}` : '/patients');
     } catch (error) {
       showToast('error', '建立病人失敗，請稍後再試');
     }

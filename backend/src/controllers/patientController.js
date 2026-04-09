@@ -153,8 +153,10 @@ const updatePatient = async (req, res) => {
        email = ?, address = ?, emergency_contact = ?, emergency_phone = ?,
        insurance_type = ?, insurance_number = ?, updated_at = NOW()
        WHERE id = ?`,
-      [patient_number, name, gender, birth_date, id_card, phone, email,
-       address, emergency_contact, emergency_phone, insurance_type, insurance_number, id]
+      [patient_number ?? null, name ?? null, gender ?? null, birth_date ?? null,
+       id_card ?? null, phone ?? null, email ?? null, address ?? null,
+       emergency_contact ?? null, emergency_phone ?? null,
+       insurance_type ?? null, insurance_number ?? null, id]
     );
 
     // Log audit
