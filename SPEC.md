@@ -24,8 +24,8 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-07 18:08 (Asia/Macau)
-**Git HEAD**: `1e0ea35` — fix: updateAppointment 控制器支持單獨更新 status 欄位
+**上次檢查**: 2026-04-09 06:08 (Asia/Macau)
+**Git HEAD**: `734abd0` — fix: PatientDetail - idCard now editable, handleSave now async
 
 ---
 
@@ -39,9 +39,10 @@ AIGC:
 | #K02 | Appointments | ~~`deleteAppointment()` 後端 API 不存在，目前只更新本地 state，刪除後不會寫入資料庫~~ ✅ 已修復 (P0-2) | 高 | 高 | ✅ 已新增 `DELETE /appointments/:id` 路由 |
 | #K03 | Documents | ~~`addDocument` 後端無對應 API~~ ✅ 已修復 (P0-1) | 中 | 中 | ✅ 已使用 `api.uploadDocument(patientId, formData)` |
 | #K05 | 時區 | ~~前端 `new Date().toISOString()` 使用 UTC，後端 `CURDATE()` 使用 CST (+8)，每日 00:00~00:59 會出現 1 天偏差~~ ✅ 已修復 (P0-3) | 中 | 中 | init-data.js 已改用 CST (+8h offset) |
-| #K06 | Appointments | ~~`PUT /appointments/:id/complete` 端點返回 500 伺服器錯誤~~ ✅ 已修復 (commit `1e0ea35`) | 高 | 高 | 控制器已支持單獨更新 status 欄位 |
+| #K06 | Appointments | ~~`PUT /appointments/:id/complete` 端點返回 500 伺服器錯誤~~ ⚠️ 部分修復 | 高 | 高 | 直接 `PUT /appointments/:id` 加 `{"status":"completed"}` 可用，但專用 `/complete` 端點仍返回 500（需传入 consultation_type/consultation_notes 否則 consultation_notes 為 NULL） |
 | #K04 | 即時同步 | 多人同時使用系統時，無 WebSocket 機制，其他人需要手動刷新才能看到更新 | 高 | 高 | 行業標準：任何資料庫寫入後應即時推送至所有在線客戶端 |
 | #K07 | Documents | `DataContext.updateDocument` 只更新本地 state，後端無 `PUT /documents/:id` 端點（文件上傳使用 POST，無單獨更新 metadata 端點） | 低 | 低 | 日後如需更新文件 metadata，需新增對應端點 |
+| #K08 | RBAC/Doctors | ~~醫生角色刪除病人返回 403，但 RBAC 矩陣顯示有完整 CRUD~~ ✅ 已解決：後端 `constants.js` doctor.delete=false 正確，前端刪除按鈕現已限定僅 admin 可見 | 中 | 中 | ✅ 已解決（commit `734abd0`）：前端刪除按鈕 `user?.role === 'admin'` 才渲染 |
 
 > ⚠️ **日後新增問題**：任何新發現的未完成問題，都必須立即記錄在此區塊，格式同上，不得遺漏。
 

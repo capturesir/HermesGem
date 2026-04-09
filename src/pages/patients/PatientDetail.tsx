@@ -212,13 +212,15 @@ const PatientDetail: React.FC = () => {
                       <Edit className="w-4 h-4" />
                       編輯
                     </button>
-                    <button
-                      onClick={handleDelete}
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      刪除
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={handleDelete}
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        刪除
                     </button>
+                    )}
                   </>
                 )}
               </>
