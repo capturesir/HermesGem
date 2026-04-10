@@ -53,6 +53,7 @@ const OnlineConsultation: React.FC = () => {
   const icd10TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 捕捉正在搜尋的關鍵字（用於只取代該段）
   const icd10QueryRef = useRef('');
+  const assessmentRef = useRef<HTMLTextAreaElement>(null);
 
   // Medication typeahead state (per medication row index)
   const [medQuery, setMedQuery] = useState<Record<number, string>>({});
@@ -264,6 +265,7 @@ const OnlineConsultation: React.FC = () => {
 
     setShowIcd10Dropdown(false);
     setIcd10Query('');
+    assessmentRef.current?.focus();
   };
 
   // Medication search typeahead for a specific row
@@ -544,6 +546,7 @@ const OnlineConsultation: React.FC = () => {
                   </label>
                   <div className="relative">
                     <textarea
+                      ref={assessmentRef}
                       value={soapForm.assessment}
                       onChange={e => {
                         setSoapForm(prev => ({ ...prev, assessment: e.target.value }));

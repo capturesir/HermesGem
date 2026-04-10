@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Stethoscope, X, User, Search } from 'lucide-react';
 import { useData } from '../../context/DataContext';
@@ -48,6 +48,7 @@ const PatientSOAP: React.FC = () => {
   const icd10TimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   // 捕捉正在搜尋的關鍵字（用於只取代該段）
   const icd10QueryRef = React.useRef('');
+  const assessmentRef = useRef<HTMLTextAreaElement>(null);
 
   // ICD-10 search
   const searchICD10 = useCallback((query: string) => {
@@ -104,6 +105,7 @@ const PatientSOAP: React.FC = () => {
     }
 
     setShowIcd10Dropdown(false);
+    assessmentRef.current?.focus();
   };
 
   if (!patient) {
@@ -275,6 +277,7 @@ const PatientSOAP: React.FC = () => {
                 </label>
                 <div className="relative">
                   <textarea
+                    ref={assessmentRef}
                     value={formData.assessment}
                     onChange={e => {
                       setFormData(prev => ({ ...prev, assessment: e.target.value }));
