@@ -244,14 +244,16 @@ const OnlineConsultation: React.FC = () => {
       const before = current.slice(0, searchFrom);
       const afterQuery = current.slice(searchFrom);
 
-      if (afterQuery.startsWith(query)) {
-        // 關鍵字在結尾 → 只取代關鍵字部分
+      // 去除首尾空白後比對，支援 "sure,  惡性" 這類有多餘空格的情況
+      if (afterQuery.trim().startsWith(query.trim())) {
+        // 去掉 leading whitespace，移除 query 關鍵字，保留後面的文字
+        const trimmed = afterQuery.trim();
+        const keywordRest = trimmed.slice(query.trim().length).trim();
         setSoapForm(prev => ({
           ...prev,
-          assessment: before + matchedText,
+          assessment: before + matchedText + (keywordRest ? ' ' + keywordRest : ''),
         }));
       } else {
-        // 關鍵字不在預期位置 → 直接附加（不重複）
         setSoapForm(prev => ({
           ...prev,
           assessment: current ? `${current} ${matchedText}` : matchedText,

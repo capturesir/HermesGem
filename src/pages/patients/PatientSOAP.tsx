@@ -87,8 +87,13 @@ const PatientSOAP: React.FC = () => {
       const before = current.slice(0, searchFrom);
       const afterQuery = current.slice(searchFrom);
 
-      if (afterQuery.startsWith(query)) {
-        setFormData(prev => ({ ...prev, assessment: before + matchedText }));
+      if (afterQuery.trim().startsWith(query.trim())) {
+        const trimmed = afterQuery.trim();
+        const keywordRest = trimmed.slice(query.trim().length).trim();
+        setFormData(prev => ({
+          ...prev,
+          assessment: before + matchedText + (keywordRest ? ' ' + keywordRest : ''),
+        }));
       } else {
         setFormData(prev => ({
           ...prev,
