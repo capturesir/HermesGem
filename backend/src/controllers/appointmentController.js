@@ -340,6 +340,9 @@ const deleteAppointment = async (req, res) => {
     if (existing[0].status === 'completed') {
       return res.status(400).json({ error: '已完成的預約無法刪除' });
     }
+    if (existing[0].status === 'cancelled') {
+      return res.status(400).json({ error: '已取消的預約為正式記錄，無法刪除' });
+    }
 
     await pool.execute('DELETE FROM appointments WHERE id = ?', [id]);
 
