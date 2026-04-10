@@ -78,6 +78,7 @@ const PatientSOAP: React.FC = () => {
       setFormData(prev => ({ ...prev, assessment: matchedText }));
     } else {
       const lastSepIdx = Math.max(
+        current.lastIndexOf('\n'),
         current.lastIndexOf(','),
         current.lastIndexOf('，'),
         current.lastIndexOf(';'),

@@ -235,6 +235,7 @@ const OnlineConsultation: React.FC = () => {
     } else {
       // 嘗試在文字中找到引發搜尋的關鍵字並替換
       const lastSepIdx = Math.max(
+        current.lastIndexOf('\n'),
         current.lastIndexOf(','),
         current.lastIndexOf('，'),
         current.lastIndexOf(';'),
