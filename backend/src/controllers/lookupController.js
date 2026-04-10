@@ -1,6 +1,6 @@
 const pool = require('../config/database');
 
-// Search ICD-10 codes
+// Search ICD-10 codes (searches code, name_zh, name_en, name_pt)
 const searchICD10 = async (req, res) => {
   try {
     const { q } = req.query;
@@ -11,11 +11,16 @@ const searchICD10 = async (req, res) => {
 
     const searchPattern = `%${q}%`;
     const [rows] = await pool.execute(
-      `SELECT id, code, name_tc, name_en, category
+      `SELECT id, code, name_tc, name_en, name_pt,
+              category_tc, category_en, category_pt
        FROM icd10_codes
-       WHERE code LIKE ? OR name_tc LIKE ? OR name_en LIKE ?
+       WHERE code    LIKE ? collate utf8mb4_general_ci
+          OR name_tc LIKE ? collate utf8mb4_general_ci
+          OR name_en LIKE ? collate utf8mb4_general_ci
+          OR name_pt LIKE ? collate utf8mb4_general_ci
+       ORDER BY code ASC
        LIMIT 50`,
-      [searchPattern, searchPattern, searchPattern]
+      [searchPattern, searchPattern, searchPattern, searchPattern]
     );
 
     res.json(rows);
@@ -25,16 +30,18 @@ const searchICD10 = async (req, res) => {
   }
 };
 
-// Get all ICD-10 codes (by category)
+// Get all ICD-10 codes
 const getAllICD10 = async (req, res) => {
   try {
     const { category } = req.query;
 
-    let query = 'SELECT id, code, name_tc, name_en, category FROM icd10_codes';
+    let query = `SELECT id, code, name_tc, name_en, name_pt,
+                        category_tc, category_en, category_pt
+                 FROM icd10_codes`;
     const params = [];
 
     if (category) {
-      query += ' WHERE category = ?';
+      query += ' WHERE category_tc = ?';
       params.push(category);
     }
 

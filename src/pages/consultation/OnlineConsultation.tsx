@@ -224,7 +224,7 @@ const OnlineConsultation: React.FC = () => {
   const handleIcd10Select = (code: any) => {
     const current = soapForm.assessment;
     const prefix = current ? `${current} ` : '';
-    setSoapForm(prev => ({ ...prev, assessment: `${prefix}[${code.code}] ${code.name_tc}` }));
+    setSoapForm(prev => ({ ...prev, assessment: `${prefix}[${code.code}] ${code.category_tc}：${code.name_tc}` }));
     setShowIcd10Dropdown(false);
     setIcd10Query('');
   };
@@ -518,7 +518,7 @@ const OnlineConsultation: React.FC = () => {
                       className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none resize-none"
                     />
                     {showIcd10Dropdown && icd10Results.length > 0 && (
-                      <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                      <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
                         {icd10Results.map((code: any) => (
                           <button
                             key={code.id}
@@ -527,7 +527,9 @@ const OnlineConsultation: React.FC = () => {
                             className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-slate-100 last:border-0 transition-colors"
                           >
                             <span className="font-mono text-blue-600 text-sm mr-2">{code.code}</span>
-                            <span className="text-slate-800 text-sm">{code.name_tc}</span>
+                            <span className="text-slate-500 text-xs mr-2">[{code.category_tc || ''}]</span>
+                            <span className="text-slate-800 text-sm mr-2">{code.name_tc}</span>
+                            {code.name_en && <span className="text-slate-400 text-xs">/ {code.name_en}</span>}
                           </button>
                         ))}
                       </div>

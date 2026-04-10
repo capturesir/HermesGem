@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Stethoscope, X, User } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Stethoscope, X, User, Search } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -41,6 +41,37 @@ const PatientSOAP: React.FC = () => {
     plan: '',
     notes: '',
   });
+
+  // ICD-10 search state
+  const [icd10Results, setIcd10Results] = useState<any[]>([]);
+  const [showIcd10Dropdown, setShowIcd10Dropdown] = useState(false);
+  const icd10TimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ICD-10 search
+  const searchICD10 = useCallback((query: string) => {
+    if (icd10TimerRef.current) clearTimeout(icd10TimerRef.current);
+    if (query.trim().length < 1) {
+      setIcd10Results([]);
+      setShowIcd10Dropdown(false);
+      return;
+    }
+    icd10TimerRef.current = setTimeout(async () => {
+      try {
+        const results = await api.searchICD10(query) as any[];
+        setIcd10Results(results);
+        setShowIcd10Dropdown(true);
+      } catch {
+        setIcd10Results([]);
+      }
+    }, 300);
+  }, []);
+
+  const handleIcd10Select = (code: any) => {
+    const current = formData.assessment;
+    const prefix = current ? `${current} ` : '';
+    setFormData(prev => ({ ...prev, assessment: `${prefix}[${code.code}] ${code.category_tc}：${code.name_tc}` }));
+    setShowIcd10Dropdown(false);
+  };
 
   if (!patient) {
     return (
@@ -209,13 +240,40 @@ const PatientSOAP: React.FC = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   A - 評估 <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  value={formData.assessment}
-                  onChange={e => setFormData(prev => ({ ...prev, assessment: e.target.value }))}
-                  rows={3}
-                  placeholder="診斷意見、病情評估..."
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none resize-none"
-                />
+                <div className="relative">
+                  <textarea
+                    value={formData.assessment}
+                    onChange={e => {
+                      setFormData(prev => ({ ...prev, assessment: e.target.value }));
+                      searchICD10(e.target.value.split(/[\s,]+/).pop() || '');
+                    }}
+                    onBlur={() => setTimeout(() => setShowIcd10Dropdown(false), 200)}
+                    rows={3}
+                    placeholder="診斷意見、病情評估（可輸入關鍵字搜尋ICD-10）..."
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none resize-none"
+                  />
+                  {showIcd10Dropdown && icd10Results.length > 0 && (
+                    <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                      {icd10Results.map((code: any) => (
+                        <button
+                          key={code.id}
+                          type="button"
+                          onMouseDown={() => handleIcd10Select(code)}
+                          className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-slate-100 last:border-0 transition-colors"
+                        >
+                          <span className="font-mono text-blue-600 text-sm mr-2">{code.code}</span>
+                          <span className="text-slate-500 text-xs mr-2">[{code.category_tc || ''}]</span>
+                          <span className="text-slate-800 text-sm mr-2">{code.name_tc}</span>
+                          {code.name_en && <span className="text-slate-400 text-xs">/ {code.name_en}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 mt-1.5">
+                  <Search className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-400">可直接輸入文字，或輸入關鍵字後從下拉選單選擇 ICD-10 疾病</span>
+                </div>
               </div>
 
               <div>

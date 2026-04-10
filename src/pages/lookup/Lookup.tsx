@@ -8,7 +8,11 @@ interface ICD10Code {
   code: string;
   name_tc: string;
   name_en: string;
+  name_pt: string;
   category: string;
+  category_tc: string;
+  category_en: string;
+  category_pt: string;
 }
 
 interface Medication {
@@ -45,7 +49,8 @@ export default function Lookup() {
       item =>
         item.code.toLowerCase().includes(q) ||
         item.name_tc.includes(icd10Query) ||
-        item.name_en.toLowerCase().includes(q)
+        (item.name_en && item.name_en.toLowerCase().includes(q)) ||
+        (item.name_pt && item.name_pt.toLowerCase().includes(q))
     );
   }, [allIcd10, icd10Query]);
 
@@ -122,9 +127,9 @@ export default function Lookup() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">ICD-10 編碼</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">中文分類</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">中文名稱</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">英文名稱</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">類別</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
               </tr>
             </thead>
@@ -145,9 +150,9 @@ export default function Lookup() {
                     <td className="px-6 py-3">
                       <span className="font-mono text-sm bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{item.code}</span>
                     </td>
+                    <td className="px-6 py-3">{categoryBadge(item.category_tc)}</td>
                     <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.name_tc}</td>
                     <td className="px-6 py-3 text-sm text-gray-600">{item.name_en}</td>
-                    <td className="px-6 py-3">{categoryBadge(item.category)}</td>
                     <td className="px-6 py-3 text-right">
                       <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">選擇</button>
                     </td>
