@@ -72,8 +72,9 @@ const Appointments: React.FC = () => {
     try {
       await deleteAppointment(deleteTarget!.id);
       showToast('success', '預約已刪除');
-    } catch (err) {
-      showToast('error', '刪除失敗，請確保您有權限');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || '刪除失敗，請確保您有權限';
+      showToast('error', msg);
     } finally {
       setShowDeleteModal(false);
       setDeleteTarget(null);
