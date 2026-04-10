@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Search, Calendar as CalendarIcon } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import api from '../../services/api';
@@ -10,17 +9,17 @@ import { getCSTDateString } from '../../lib/dateUtils';
 
 const AppointmentForm: React.FC = () => {
   const navigate = useNavigate();
-  const { user, users } = useAuth();
   const { patients, getPatientById, getPatientByNumber, addAppointment, refreshAppointments } = useData();
   const { showToast } = useToast();
 
-  const doctors = users.filter(u => u.role === 'doctor');
-
-  // Ensure users are loaded (fixes empty doctor dropdown after fresh login)
+  // 直接從 API 抓醫生列表，不再依賴 AuthContext（避免空閒後 users 為空的問題）
+  const [doctors, setDoctors] = useState<any[]>([]);
   useEffect(() => {
-    if (users.length === 0) {
-      api.getUsers().catch(() => {});
-    }
+    api.getUsers().then((data: any) => {
+      if (Array.isArray(data)) {
+        setDoctors(data.filter((u: any) => u.role === 'doctor'));
+      }
+    }).catch(() => {});
   }, []);
 
   const [formData, setFormData] = useState({
@@ -72,7 +71,7 @@ const AppointmentForm: React.FC = () => {
   };
 
   const handleDoctorChange = (doctorId: string) => {
-    const doctor = users.find(u => u.id === doctorId);
+    const doctor = doctors.find(u => u.id === doctorId);
     setFormData(prev => ({
       ...prev,
       doctorId,
