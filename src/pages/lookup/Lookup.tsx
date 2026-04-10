@@ -162,17 +162,16 @@ export default function Lookup() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">中文分類</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">中文名稱</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">英文名稱</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-400">載入中...</td>
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-400">載入中...</td>
                   </tr>
                 ) : filteredIcd10.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
                       {allIcd10.length === 0 ? '尚無疾病分類資料' : '找不到符合的疾病分類'}
                     </td>
                   </tr>
@@ -185,9 +184,6 @@ export default function Lookup() {
                       <td className="px-6 py-3">{categoryBadge(item.category_tc)}</td>
                       <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.name_tc}</td>
                       <td className="px-6 py-3 text-sm text-gray-600">{item.name_en}</td>
-                      <td className="px-6 py-3 text-right">
-                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">選擇</button>
-                      </td>
                     </tr>
                   ))
                 )}
@@ -233,19 +229,17 @@ export default function Lookup() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">藥物名稱</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">學名</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">劑量</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">用法頻率</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">途徑</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">載入中...</td>
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-400">載入中...</td>
                   </tr>
                 ) : filteredMeds.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
                       {allMedications.length === 0 ? '尚無藥物資料' : '找不到符合的藥物'}
                     </td>
                   </tr>
@@ -255,11 +249,7 @@ export default function Lookup() {
                       <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.name}</td>
                       <td className="px-6 py-3 text-sm text-gray-600">{item.generic_name || '-'}</td>
                       <td className="px-6 py-3 text-sm text-gray-600">{item.dosage || '-'}</td>
-                      <td className="px-6 py-3 text-sm text-gray-600">{item.frequency || '-'}</td>
                       <td className="px-6 py-3 text-sm text-gray-600">{item.route || '-'}</td>
-                      <td className="px-6 py-3 text-right">
-                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">選擇</button>
-                      </td>
                     </tr>
                   ))
                 )}
