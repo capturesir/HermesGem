@@ -227,7 +227,7 @@ const OnlineConsultation: React.FC = () => {
   const handleIcd10Select = (code: any) => {
     const current = soapForm.assessment;
     const query = icd10QueryRef.current;  // 只取代這段關鍵字
-    const matchedText = `[${code.code}] ${code.category_tc}：${code.name_tc}`;
+    const matchedText = `[${code.code}] ${code.name_en || ''} ${code.name_tc}`.replace(/\s+/g, ' ').trim();
 
     if (!current || !query) {
       // 空欄位：直接插入
@@ -564,9 +564,8 @@ const OnlineConsultation: React.FC = () => {
                             className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-slate-100 last:border-0 transition-colors"
                           >
                             <span className="font-mono text-blue-600 text-sm mr-2">{code.code}</span>
-                            <span className="text-slate-500 text-xs mr-2">[{code.category_tc || ''}]</span>
-                            <span className="text-slate-800 text-sm mr-2">{code.name_tc}</span>
-                            {code.name_en && <span className="text-slate-400 text-xs">/ {code.name_en}</span>}
+                            <span className="text-slate-800 text-sm mr-2">{code.name_en || ''} {code.name_tc}</span>
+                            {code.category_tc && <span className="text-slate-400 text-xs">({code.category_tc})</span>}
                           </button>
                         ))}
                       </div>
