@@ -105,7 +105,8 @@ const PatientSOAP: React.FC = () => {
     }
 
     setShowIcd10Dropdown(false);
-    assessmentRef.current?.focus();
+    // 延後到 DOM 更新完成後執行，確保 focus 在 re-render 後仍有效
+    setTimeout(() => assessmentRef.current?.focus(), 0);
   };
 
   if (!patient) {
