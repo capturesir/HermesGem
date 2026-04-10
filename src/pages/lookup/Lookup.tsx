@@ -9,7 +9,6 @@ interface ICD10Code {
   name_tc: string;
   name_en: string;
   name_pt: string;
-  category: string;
   category_tc: string;
   category_en: string;
   category_pt: string;
@@ -24,7 +23,10 @@ interface Medication {
   frequency: string;
 }
 
+type TabType = 'icd10' | 'medications';
+
 export default function Lookup() {
+  const [activeTab, setActiveTab] = useState<TabType>('icd10');
   const [icd10Query, setIcd10Query] = useState('');
   const [medicationQuery, setMedicationQuery] = useState('');
   const [allIcd10, setAllIcd10] = useState<ICD10Code[]>([]);
@@ -87,152 +89,185 @@ export default function Lookup() {
     return <span className={`text-xs px-2 py-0.5 rounded font-medium ${cls}`}>{cat}</span>;
   };
 
+  const tabs: { key: TabType; label: string; icon: React.ReactNode; count: number }[] = [
+    { key: 'icd10', label: 'ICD-10 疾病分類', icon: <Stethoscope className="w-4 h-4" />, count: filteredIcd10.length },
+    { key: 'medications', label: '藥物資料庫', icon: <Pill className="w-4 h-4" />, count: filteredMeds.length },
+  ];
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-4">
+      {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">查找工具</h1>
-        <p className="text-gray-500 mt-1">快速查找 ICD-10 疾病分類與藥物資料</p>
+        <p className="text-gray-500 mt-1">快速查找疾病分類與藥物資料</p>
       </div>
 
-      {/* ICD-10 Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Stethoscope className="w-5 h-5 text-blue-500" />
-            <h2 className="text-base font-semibold text-gray-900">ICD-10 疾病分類</h2>
-            <span className="text-xs text-gray-400">
-              {isLoading ? '載入中...' : `${filteredIcd10.length} 筆`}
+      {/* Tab Bar */}
+      <div className="flex items-center gap-1 bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+        {tabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              activeTab === tab.key
+                ? 'bg-blue-50 text-blue-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+              activeTab === tab.key ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
+            }`}>
+              {isLoading ? '…' : tab.count}
             </span>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="搜尋疾病名稱或 ICD-10 編碼..."
-              value={icd10Query}
-              onChange={e => setIcd10Query(e.target.value)}
-              className="pl-9 w-64"
-            />
-            {icd10Query && (
-              <button onClick={() => setIcd10Query('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
+          </button>
+        ))}
+      </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">ICD-10 編碼</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">中文分類</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">中文名稱</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">英文名稱</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">載入中...</td>
+      {/* ICD-10 Tab */}
+      {activeTab === 'icd10' && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Toolbar */}
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Stethoscope className="w-5 h-5 text-blue-500" />
+              <h2 className="text-base font-semibold text-gray-900">ICD-10 疾病分類</h2>
+            </div>
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="搜尋編碼、中文名、英文名、葡文名…"
+                value={icd10Query}
+                onChange={e => setIcd10Query(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {icd10Query && (
+                <button
+                  onClick={() => setIcd10Query('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">ICD-10 編碼</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">中文分類</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">中文名稱</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">英文名稱</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
-              ) : filteredIcd10.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
-                    {allIcd10.length === 0 ? '尚無疾病分類資料' : '找不到符合的疾病分類'}
-                  </td>
-                </tr>
-              ) : (
-                filteredIcd10.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-3">
-                      <span className="font-mono text-sm bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{item.code}</span>
-                    </td>
-                    <td className="px-6 py-3">{categoryBadge(item.category_tc)}</td>
-                    <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.name_tc}</td>
-                    <td className="px-6 py-3 text-sm text-gray-600">{item.name_en}</td>
-                    <td className="px-6 py-3 text-right">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">選擇</button>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-400">載入中...</td>
+                  </tr>
+                ) : filteredIcd10.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                      {allIcd10.length === 0 ? '尚無疾病分類資料' : '找不到符合的疾病分類'}
                     </td>
                   </tr>
-                ))
+                ) : (
+                  filteredIcd10.map(item => (
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-3">
+                        <span className="font-mono text-sm bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{item.code}</span>
+                      </td>
+                      <td className="px-6 py-3">{categoryBadge(item.category_tc)}</td>
+                      <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.name_tc}</td>
+                      <td className="px-6 py-3 text-sm text-gray-600">{item.name_en}</td>
+                      <td className="px-6 py-3 text-right">
+                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">選擇</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Medications Tab */}
+      {activeTab === 'medications' && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Toolbar */}
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Pill className="w-5 h-5 text-blue-500" />
+              <h2 className="text-base font-semibold text-gray-900">藥物資料庫</h2>
+            </div>
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="搜尋藥物名稱、學名、劑量…"
+                value={medicationQuery}
+                onChange={e => setMedicationQuery(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {medicationQuery && (
+                <button
+                  onClick={() => setMedicationQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Medications Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Pill className="w-5 h-5 text-blue-500" />
-            <h2 className="text-base font-semibold text-gray-900">藥物資料庫</h2>
-            <span className="text-xs text-gray-400">
-              {isLoading ? '載入中...' : `${filteredMeds.length} 筆`}
-            </span>
+            </div>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="搜尋藥物名稱..."
-              value={medicationQuery}
-              onChange={e => setMedicationQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-            {medicationQuery && (
-              <button onClick={() => setMedicationQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">藥物名稱</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">學名</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">劑量</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">用法頻率</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">途徑</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">載入中...</td>
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">藥物名稱</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">學名</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">劑量</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">用法頻率</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">途徑</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
-              ) : filteredMeds.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                    {allMedications.length === 0 ? '尚無藥物資料' : '找不到符合的藥物'}
-                  </td>
-                </tr>
-              ) : (
-                filteredMeds.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.name}</td>
-                    <td className="px-6 py-3 text-sm text-gray-600">{item.generic_name || '-'}</td>
-                    <td className="px-6 py-3 text-sm text-gray-600">{item.dosage || '-'}</td>
-                    <td className="px-6 py-3 text-sm text-gray-600">{item.frequency || '-'}</td>
-                    <td className="px-6 py-3 text-sm text-gray-600">{item.route || '-'}</td>
-                    <td className="px-6 py-3 text-right">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">選擇</button>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">載入中...</td>
+                  </tr>
+                ) : filteredMeds.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                      {allMedications.length === 0 ? '尚無藥物資料' : '找不到符合的藥物'}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredMeds.map(item => (
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-3 text-sm font-medium text-gray-900">{item.name}</td>
+                      <td className="px-6 py-3 text-sm text-gray-600">{item.generic_name || '-'}</td>
+                      <td className="px-6 py-3 text-sm text-gray-600">{item.dosage || '-'}</td>
+                      <td className="px-6 py-3 text-sm text-gray-600">{item.frequency || '-'}</td>
+                      <td className="px-6 py-3 text-sm text-gray-600">{item.route || '-'}</td>
+                      <td className="px-6 py-3 text-right">
+                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">選擇</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
