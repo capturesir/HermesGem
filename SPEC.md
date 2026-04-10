@@ -25,7 +25,7 @@ AIGC:
 | 前端服務 | ✅ 運行中 (port 5176) |
 
 **上次檢查**: 2026-04-09 06:08 (Asia/Macau)
-**Git HEAD**: `744e2b1` — fix: block deletion of completed/cancelled appointments at backend + API error shown to user
+**Git HEAD**: `ed5fa19` — fix: hide delete (X) button for cancelled and completed appointments
 
 ---
 
@@ -36,7 +36,7 @@ AIGC:
 | ID | 模組 | 問題描述 | 嚴重程度 | 優先順序 | 備註 |
 |----|------|---------|---------|---------|------|
 | #K01 | DataContext | `alerts / vitals / allergies / soap / prescriptions` 後端只有 per-patient 端點，DataContext 初始化時無法預載這些數據，目前為空陣列 | 中 | 中 | 需要新增對應的全域 API 或調整 DataContext 加載策略 |
-| #K02 | Appointments | ~~`deleteAppointment()` 後端 API 不存在，目前只更新本地 state，刪除後不會寫入資料庫~~ ✅ 已修復 (P0-2)；✅ 已實完成/已取消狀態不可刪除的限制（後端 API 層） | 高 | 高 | ✅ `DELETE /appointments/:id`；後端阻擋 completed/cancelled 刪除 |
+| #K02 | Appointments | ~~`deleteAppointment()` 後端 API 不存在~~ ✅ 已修復；~~前端刪除按鈕對所有狀態都顯示~~ ✅ 已修復；後端 API 阻擋 completed/cancelled 刪除（commit `744e2b1`）；前端取消/刪除按鈕對 completed/cancelled 狀態均隱藏（commit `ed5fa19`） | 高 | 高 | ✅ `DELETE /api/appointments/:id`；✅ 前端按鈕 visibility 正確 |
 | #K03 | Documents | ~~`addDocument` 後端無對應 API~~ ✅ 已修復 (P0-1) | 中 | 中 | ✅ 已使用 `api.uploadDocument(patientId, formData)` |
 | #K05 | 時區 | ~~前端 `new Date().toISOString()` 使用 UTC，後端 `CURDATE()` 使用 CST (+8)，每日 00:00~00:59 會出現 1 天偏差~~ ✅ 已修復 (P0-3) | 中 | 中 | init-data.js 已改用 CST (+8h offset) |
 | #K06 | Appointments | ~~`PUT /appointments/:id/complete` 端點返回 500 伺服器錯誤~~ ⚠️ 部分修復 | 高 | 高 | 直接 `PUT /appointments/:id` 加 `{"status":"completed"}` 可用，但專用 `/complete` 端點仍返回 500（需传入 consultation_type/consultation_notes 否則 consultation_notes 為 NULL） |
