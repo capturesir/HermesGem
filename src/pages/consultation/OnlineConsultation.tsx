@@ -51,6 +51,8 @@ const OnlineConsultation: React.FC = () => {
   const [icd10Results, setIcd10Results] = useState<any[]>([]);
   const [showIcd10Dropdown, setShowIcd10Dropdown] = useState(false);
   const icd10TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 捕捉正在搜尋的關鍵字（用於只取代該段）
+  const icd10QueryRef = useRef('');
 
   // Medication typeahead state (per medication row index)
   const [medQuery, setMedQuery] = useState<Record<number, string>>({});
@@ -212,6 +214,7 @@ const OnlineConsultation: React.FC = () => {
     }
     icd10TimerRef.current = setTimeout(async () => {
       try {
+        icd10QueryRef.current = query;  // 立即捕捉關鍵字
         const results = await api.searchICD10(query) as any[];
         setIcd10Results(results);
         setShowIcd10Dropdown(true);
@@ -223,8 +226,39 @@ const OnlineConsultation: React.FC = () => {
 
   const handleIcd10Select = (code: any) => {
     const current = soapForm.assessment;
-    const prefix = current ? `${current} ` : '';
-    setSoapForm(prev => ({ ...prev, assessment: `${prefix}[${code.code}] ${code.category_tc}：${code.name_tc}` }));
+    const query = icd10QueryRef.current;  // 只取代這段關鍵字
+    const matchedText = `[${code.code}] ${code.category_tc}：${code.name_tc}`;
+
+    if (!current || !query) {
+      // 空欄位：直接插入
+      setSoapForm(prev => ({ ...prev, assessment: matchedText }));
+    } else {
+      // 嘗試在文字中找到引發搜尋的關鍵字並替換
+      const lastSepIdx = Math.max(
+        current.lastIndexOf(','),
+        current.lastIndexOf('，'),
+        current.lastIndexOf(';'),
+        current.lastIndexOf('；'),
+      );
+      const searchFrom = lastSepIdx + 1;
+      const before = current.slice(0, searchFrom);
+      const afterQuery = current.slice(searchFrom);
+
+      if (afterQuery.startsWith(query)) {
+        // 關鍵字在結尾 → 只取代關鍵字部分
+        setSoapForm(prev => ({
+          ...prev,
+          assessment: before + matchedText,
+        }));
+      } else {
+        // 關鍵字不在預期位置 → 直接附加（不重複）
+        setSoapForm(prev => ({
+          ...prev,
+          assessment: current ? `${current} ${matchedText}` : matchedText,
+        }));
+      }
+    }
+
     setShowIcd10Dropdown(false);
     setIcd10Query('');
   };

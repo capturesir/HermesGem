@@ -46,6 +46,8 @@ const PatientSOAP: React.FC = () => {
   const [icd10Results, setIcd10Results] = useState<any[]>([]);
   const [showIcd10Dropdown, setShowIcd10Dropdown] = useState(false);
   const icd10TimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 捕捉正在搜尋的關鍵字（用於只取代該段）
+  const icd10QueryRef = React.useRef('');
 
   // ICD-10 search
   const searchICD10 = useCallback((query: string) => {
@@ -57,6 +59,7 @@ const PatientSOAP: React.FC = () => {
     }
     icd10TimerRef.current = setTimeout(async () => {
       try {
+        icd10QueryRef.current = query;  // 立即捕捉關鍵字
         const results = await api.searchICD10(query) as any[];
         setIcd10Results(results);
         setShowIcd10Dropdown(true);
@@ -68,8 +71,32 @@ const PatientSOAP: React.FC = () => {
 
   const handleIcd10Select = (code: any) => {
     const current = formData.assessment;
-    const prefix = current ? `${current} ` : '';
-    setFormData(prev => ({ ...prev, assessment: `${prefix}[${code.code}] ${code.category_tc}：${code.name_tc}` }));
+    const query = icd10QueryRef.current;  // 只取代這段關鍵字
+    const matchedText = `[${code.code}] ${code.category_tc}：${code.name_tc}`;
+
+    if (!current || !query) {
+      setFormData(prev => ({ ...prev, assessment: matchedText }));
+    } else {
+      const lastSepIdx = Math.max(
+        current.lastIndexOf(','),
+        current.lastIndexOf('，'),
+        current.lastIndexOf(';'),
+        current.lastIndexOf('；'),
+      );
+      const searchFrom = lastSepIdx + 1;
+      const before = current.slice(0, searchFrom);
+      const afterQuery = current.slice(searchFrom);
+
+      if (afterQuery.startsWith(query)) {
+        setFormData(prev => ({ ...prev, assessment: before + matchedText }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          assessment: current ? `${current} ${matchedText}` : matchedText,
+        }));
+      }
+    }
+
     setShowIcd10Dropdown(false);
   };
 
