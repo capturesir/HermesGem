@@ -72,7 +72,7 @@ const PatientSOAP: React.FC = () => {
   const handleIcd10Select = (code: any) => {
     const current = formData.assessment;
     const query = icd10QueryRef.current;  // 只取代這段關鍵字
-    const matchedText = `[${code.code}] ${code.name_en || ''} ${code.name_tc}`.replace(/\s+/g, ' ').trim();
+    const matchedText = `[${code.code}] ${code.name_en || ''} ${code.name_tc}，`.replace(/\s+/g, ' ').trim();
 
     if (!current || !query) {
       setFormData(prev => ({ ...prev, assessment: matchedText }));
