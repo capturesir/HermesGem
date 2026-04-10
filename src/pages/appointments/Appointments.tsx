@@ -337,12 +337,14 @@ const Appointments: React.FC = () => {
                                   取消
                                 </button>
                               )}
-                              <button
-                                onClick={() => handleDelete(apt)}
-                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </button>
+                              {apt.status !== 'cancelled' && apt.status !== 'completed' && (
+                                <button
+                                  onClick={() => handleDelete(apt)}
+                                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </button>
+                              )}
                               {apt.patientId && (
                                 <Link
                                   to={`/patients/${apt.patientId}`}
