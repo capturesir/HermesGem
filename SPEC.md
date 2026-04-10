@@ -241,21 +241,23 @@ TextMuted:   #64748B (次要文字)
 
 #### 4.5.1 用途
 - 增強 SOAP 記錄中「評估 (Assessment)」欄位的填寫
+- 澳門衛生局官方 ICD-10 疾病列表，含中/英/葡三語
 
 #### 4.5.2 功能
-- **搜尋**: 輸入關鍵字搜尋疾病名稱
-- **選擇**: 點擊選擇自動填入
-- **顯示**: ICD-10 編碼 + 中文名稱
+- **搜尋**: 輸入 ICD-10 編碼、中文名、英文名、葡文名均可匹配
+- **選擇**: 點擊選擇自動填入 Assessment，自動取代當前輸入的關鍵字
+- **顯示**: ICD-10 編碼 + 中文分類 + 中文名 + 英文名
 
 ### 4.6 藥物資料表 (Medication Database)
 
 #### 4.6.1 用途
 - 增強處方藥物的快速填寫
+- 澳門藥物監督管理局 (ISAF) 藥品資料（共 9,122 筆）
 
 #### 4.6.2 功能
 - **搜尋**: 輸入藥物名稱關鍵字
 - **選擇**: 點擊添加至處方
-- **顯示**: 藥物名稱、劑量、用法
+- **顯示**: 藥物名稱、學名、劑量、途徑
 
 ### 4.7 管理員系統設定
 
@@ -483,12 +485,16 @@ CREATE TABLE documents (
 #### 5.3.11 ICD-10 分類表 (icd10_codes)
 ```sql
 CREATE TABLE icd10_codes (
-  id VARCHAR(10) PRIMARY KEY,
-  code VARCHAR(10) NOT NULL,
-  name_tc VARCHAR(255) NOT NULL,
-  name_en VARCHAR(255),
-  category VARCHAR(50),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id VARCHAR(10) PRIMARY KEY,           -- ICD代碼（去除*號，如 H28）
+  code VARCHAR(10) NOT NULL,            -- 完整代碼（含*號，如 H28*）
+  name_tc VARCHAR(255) NOT NULL,        -- 中文名稱
+  name_en VARCHAR(255),                  -- 英文名稱
+  name_pt VARCHAR(500),                  -- 葡文名稱
+  category_tc VARCHAR(200),              -- 中文分類
+  category_en VARCHAR(200),              -- 英文分類
+  category_pt VARCHAR(200),              -- 葡文分類
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE INDEX uk_code (code)
 );
 ```
 
@@ -687,8 +693,8 @@ CREATE TABLE audit_logs (
 
 | Script | 說明 | 執行方式 |
 |--------|------|---------|
-| `data/icd10/seed-icd10.cjs` | ICD-10 疾病分類（WHO 2019，精選 294 筆，涵蓋全 22 章） | `NODE_PATH=./node_modules node ../data/icd10/seed-icd10.cjs` |
-| `data/medications/seed-medications.cjs` | 藥物資料庫（205 筆常見西藥） | `NODE_PATH=./node_modules node ../data/medications/seed-medications.cjs` |
+| `scripts/import_icd10_to_db.py` | ICD-10 疾病分類（澳門衛生局，2,049 筆，含中/英/葡三語） | `cd backend && NODE_PATH=./node_modules python3 ../scripts/import_icd10_to_db.py` |
+| `data/medications/seed-medications.cjs` | 藥物資料庫（204 筆常見西藥） | `NODE_PATH=./node_modules node ../data/medications/seed-medications.cjs` |
 
 > **idempotent 設計**：每次執行都會先 `TRUNCATE TABLE`（清空舊資料）再完整重新插入，確保開發/投產環境結果一致。
 
@@ -871,10 +877,13 @@ CREATE TABLE audit_logs (
 | 欄位 | 類型 | 可空 | 鍵 | 默認值 |
 |------|------|------|-----|---------|
 | id | varchar(10) | NO | PRI | |
-| code | varchar(10) | NO | | |
+| code | varchar(10) | NO | UNI | |
 | name_tc | varchar(255) | NO | | |
 | name_en | varchar(255) | YES | | |
-| category | varchar(50) | YES | | |
+| name_pt | varchar(500) | YES | | |
+| category_tc | varchar(200) | YES | | |
+| category_en | varchar(200) | YES | | |
+| category_pt | varchar(200) | YES | | |
 | created_at | timestamp | YES | | CURRENT_TIMESTAMP |
 
 ### 11.14 藥物資料表 (medications)

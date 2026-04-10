@@ -183,19 +183,28 @@ CREATE TABLE IF NOT EXISTS documents (
 );
 
 -- ICD-10 Codes table
+-- id: ICD code with * removed (e.g. H28 for H28*)
+-- code: full ICD code as-is (may include * suffix, e.g. H28*)
 CREATE TABLE IF NOT EXISTS icd10_codes (
   id VARCHAR(10) PRIMARY KEY,
   code VARCHAR(10) NOT NULL,
   name_tc VARCHAR(255) NOT NULL,
   name_en VARCHAR(255),
-  category VARCHAR(50),
+  name_pt VARCHAR(500),
+  category_tc VARCHAR(200),
+  category_en VARCHAR(200),
+  category_pt VARCHAR(200),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_icd10_code (code),
-  INDEX idx_icd10_category (category)
+  UNIQUE INDEX uk_code (code)
 );
 
+-- =============================================================================
+-- ICD-10 疾病分類資料（由 scripts/import_icd10_to_db.py 匯入 CSV）
+-- 來源：data/icd10_disease_full.csv（共 2049 筆，含中/英/葡三語名稱與分類）
+-- 執行：cd backend && NODE_PATH=./node_modules python3 ../scripts/import_icd10_to_db.py
+-- =============================================================================
+
 -- Medications table
-CREATE TABLE IF NOT EXISTS medications (
   id VARCHAR(36) PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   generic_name VARCHAR(100),
@@ -243,59 +252,6 @@ INSERT INTO system_settings (setting_key, setting_value, description) VALUES
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
 
 -- Insert default ICD-10 codes (sample data)
-INSERT INTO icd10_codes (id, code, name_tc, name_en, category) VALUES
-('1', 'A00', '霍亂', 'Cholera', '傳染病'),
-('2', 'A01', '傷寒和副傷寒', 'Typhoid and paratyphoid fevers', '傳染病'),
-('3', 'A09', '胃腸炎', 'Gastroenteritis', '消化系統'),
-('4', 'B00', '皰疹病毒感染', 'Herpesviral infections', '傳染病'),
-('5', 'B01', '水痘', 'Varicella', '傳染病'),
-('6', 'B02', '帶狀皰疹', 'Zoster', '傳染病'),
-('7', 'B15', '急性肝炎A', 'Acute hepatitis A', '肝臟疾病'),
-('8', 'B16', '急性肝炎B', 'Acute hepatitis B', '肝臟疾病'),
-('9', 'C00', '唇部惡性腫瘤', 'Malignant neoplasm of lip', '腫瘤'),
-('10', 'C18', '結腸惡性腫瘤', 'Malignant neoplasm of colon', '腫瘤'),
-('11', 'D50', '缺鐵性貧血', 'Iron deficiency anemia', '血液疾病'),
-('12', 'E10', '1型糖尿病', 'Type 1 diabetes mellitus', '內分泌'),
-('13', 'E11', '2型糖尿病', 'Type 2 diabetes mellitus', '內分泌'),
-('14', 'E78', '高膽固醇血症', 'Hypercholesterolemia', '代謝疾病'),
-('15', 'F32', '抑鬱症', 'Depressive episode', '精神疾病'),
-('16', 'F41', '焦慮症', 'Anxiety disorder', '精神疾病'),
-('17', 'G40', '癲癇', 'Epilepsy', '神經系統'),
-('18', 'G43', '偏頭痛', 'Migraine', '神經系統'),
-('19', 'H10', '結膜炎', 'Conjunctivitis', '眼部疾病'),
-('20', 'H25', '老年性白內障', 'Age-related cataract', '眼部疾病'),
-('21', 'I10', '原發性高血壓', 'Essential hypertension', '循環系統'),
-('22', 'I20', '心絞痛', 'Angina pectoris', '循環系統'),
-('23', 'I21', '心肌梗塞', 'Myocardial infarction', '循環系統'),
-('24', 'I50', '心力衰竭', 'Heart failure', '循環系統'),
-('25', 'J00', '急性鼻咽炎', 'Acute nasopharyngitis', '呼吸系統'),
-('26', 'J02', '急性咽炎', 'Acute pharyngitis', '呼吸系統'),
-('27', 'J03', '急性扁桃腺炎', 'Acute tonsillitis', '呼吸系統'),
-('28', 'J06', '上呼吸道感染', 'Acute upper respiratory infection', '呼吸系統'),
-('29', 'J18', '肺炎', 'Pneumonia', '呼吸系統'),
-('30', 'J45', '哮喘', 'Asthma', '呼吸系統'),
-('31', 'K21', '胃食道逆流', 'Gastro-esophageal reflux disease', '消化系統'),
-('32', 'K25', '胃潰瘍', 'Gastric ulcer', '消化系統'),
-('33', 'K29', '胃炎', 'Gastritis', '消化系統'),
-('34', 'K35', '急性闌尾炎', 'Acute appendicitis', '消化系統'),
-('35', 'K40', '腹股溝疝氣', 'Inguinal hernia', '消化系統'),
-('36', 'K80', '膽結石', 'Cholelithiasis', '消化系統'),
-('37', 'L20', '異位性皮膚炎', 'Atopic dermatitis', '皮膚疾病'),
-('38', 'L30', '濕疹', 'Eczema', '皮膚疾病'),
-('39', 'L50', '蕁麻疹', 'Urticaria', '皮膚疾病'),
-('40', 'M54', '腰痛', 'Back pain', '肌肉骨骼'),
-('41', 'M79', '軟組織疾病', 'Soft tissue disorders', '肌肉骨骼'),
-('42', 'N18', '慢性腎病', 'Chronic kidney disease', '泌尿系統'),
-('43', 'N39', '泌尿道感染', 'Urinary tract infection', '泌尿系統'),
-('44', 'O00', '異位妊娠', 'Ectopic pregnancy', '妊娠疾病'),
-('45', 'O26', '妊娠相關照護', 'Pregnancy related conditions', '妊娠疾病'),
-('46', 'R05', '咳嗽', 'Cough', '症狀'),
-('47', 'R10', '腹痛', 'Abdominal pain', '症狀'),
-('48', 'R50', '發燒', 'Fever', '症狀'),
-('49', 'R51', '頭痛', 'Headache', '症狀'),
-('50', 'S00', '頭部淺表損傷', 'Superficial injury of head', '損傷'),
-('51', 'T78', '過敏反應', 'Adverse reactions', '損傷')
-ON DUPLICATE KEY UPDATE name_tc = VALUES(name_tc);
 
 -- Insert sample medications
 INSERT INTO medications (id, name, generic_name, dosage, route, frequency) VALUES
