@@ -25,7 +25,7 @@ AIGC:
 | 前端服務 | ✅ 運行中 (port 5176) |
 
 **上次檢查**: 2026-04-09 06:08 (Asia/Macau)
-**Git HEAD**: `734abd0` — fix: PatientDetail - idCard now editable, handleSave now async
+**Git HEAD**: `744e2b1` — fix: block deletion of completed/cancelled appointments at backend + API error shown to user
 
 ---
 
@@ -36,7 +36,7 @@ AIGC:
 | ID | 模組 | 問題描述 | 嚴重程度 | 優先順序 | 備註 |
 |----|------|---------|---------|---------|------|
 | #K01 | DataContext | `alerts / vitals / allergies / soap / prescriptions` 後端只有 per-patient 端點，DataContext 初始化時無法預載這些數據，目前為空陣列 | 中 | 中 | 需要新增對應的全域 API 或調整 DataContext 加載策略 |
-| #K02 | Appointments | ~~`deleteAppointment()` 後端 API 不存在，目前只更新本地 state，刪除後不會寫入資料庫~~ ✅ 已修復 (P0-2) | 高 | 高 | ✅ 已新增 `DELETE /appointments/:id` 路由 |
+| #K02 | Appointments | ~~`deleteAppointment()` 後端 API 不存在，目前只更新本地 state，刪除後不會寫入資料庫~~ ✅ 已修復 (P0-2)；✅ 已實完成/已取消狀態不可刪除的限制（後端 API 層） | 高 | 高 | ✅ `DELETE /appointments/:id`；後端阻擋 completed/cancelled 刪除 |
 | #K03 | Documents | ~~`addDocument` 後端無對應 API~~ ✅ 已修復 (P0-1) | 中 | 中 | ✅ 已使用 `api.uploadDocument(patientId, formData)` |
 | #K05 | 時區 | ~~前端 `new Date().toISOString()` 使用 UTC，後端 `CURDATE()` 使用 CST (+8)，每日 00:00~00:59 會出現 1 天偏差~~ ✅ 已修復 (P0-3) | 中 | 中 | init-data.js 已改用 CST (+8h offset) |
 | #K06 | Appointments | ~~`PUT /appointments/:id/complete` 端點返回 500 伺服器錯誤~~ ⚠️ 部分修復 | 高 | 高 | 直接 `PUT /appointments/:id` 加 `{"status":"completed"}` 可用，但專用 `/complete` 端點仍返回 500（需传入 consultation_type/consultation_notes 否則 consultation_notes 為 NULL） |
@@ -174,6 +174,7 @@ TextMuted:   #64748B (次要文字)
 - **必填欄位**: 病人編號、診症日期
 - **可選欄位**: 醫生、時段、預約類型 (初診/複診/急診)、備註
 - **狀態**: 已預約 (pending)、已報到 (checked-in)、已完成 (completed)、已取消 (cancelled)
+- **刪除限制**: 僅 `pending` / `checked-in` 狀態可刪除；`completed` / `cancelled` 狀態的預約屬正式就診記錄，無法刪除（後端 API 層阻擋）
 
 #### 4.2.2 候診名單
 - **顯示**: 已報到病人列表
@@ -610,6 +611,7 @@ CREATE TABLE audit_logs (
 | PUT | /api/appointments/:id/check-in | 報到 |
 | PUT | /api/appointments/:id/complete | 完成就診 |
 | PUT | /api/appointments/:id/cancel | 取消預約 |
+| DELETE | /api/appointments/:id | 刪除預約（僅限 pending / checked-in 狀態） |
 | GET | /api/appointments/waiting | 候診名單 |
 
 ### 6.8 查找功能
