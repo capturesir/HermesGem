@@ -315,7 +315,7 @@ CREATE TABLE users (
   bio TEXT,
   gender ENUM('male', 'female', 'other', 'unspecified') DEFAULT 'unspecified',
   avatar VARCHAR(255),
-  is_active BOOLEAN DEFAULT TRUE,
+  is_active TINYINT(1) DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -334,7 +334,6 @@ CREATE TABLE patients (
   gold_card_number VARCHAR(50) UNIQUE,
   id_card VARCHAR(20),
   id_type VARCHAR(20),
-  phone VARCHAR(20),
   phone2 VARCHAR(30),
   email VARCHAR(100),
   address TEXT,
@@ -362,7 +361,7 @@ CREATE TABLE alerts (
   level ENUM('high', 'medium', 'low') NOT NULL,
   type ENUM('allergy', 'disease', 'drug', 'other') NOT NULL,
   content TEXT NOT NULL,
-  is_active BOOLEAN DEFAULT TRUE,
+  is_active TINYINT(1) DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 );
@@ -498,14 +497,14 @@ CREATE TABLE documents (
 #### 5.3.11 ICD-10 分類表 (icd10_codes)
 ```sql
 CREATE TABLE icd10_codes (
-  id VARCHAR(10) PRIMARY KEY,           -- ICD代碼（去除*號，如 H28）
-  code VARCHAR(10) NOT NULL,            -- 完整代碼（含*號，如 H28*）
-  name_tc VARCHAR(255) NOT NULL,        -- 中文名稱
-  name_en VARCHAR(255),                  -- 英文名稱
-  name_pt VARCHAR(500),                  -- 葡文名稱
-  category_tc VARCHAR(200),              -- 中文分類
-  category_en VARCHAR(200),              -- 英文分類
-  category_pt VARCHAR(200),              -- 葡文分類
+  id VARCHAR(10) PRIMARY KEY,
+  code VARCHAR(10) NOT NULL,
+  name_tc VARCHAR(255) NOT NULL,
+  name_en VARCHAR(255),
+  name_pt VARCHAR(500),
+  category_tc VARCHAR(200),
+  category_en VARCHAR(200),
+  category_pt VARCHAR(200),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE INDEX uk_code (code)
 );
