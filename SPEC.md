@@ -1038,6 +1038,37 @@ CREATE TABLE audit_logs (
 
 ---
 
+## 13. 待開發功能 (Future Development Roadmap)
+
+### 13.13 新增病人頁面配合新資料表結構
+- 因應病人資料表已擴展至 25 欄（新增 name_en、gold_card_number、medical_number、id_type、phone2、contact_address、emergency_contact_* 等），需更新：
+  - 新增病人頁面（NewPatient.tsx）：加入所有新欄位的輸入欄位（name_en、medical_number、gold_card_number、id_type、phone2、contact_address、emergency_contact_address、emergency_contact_phone2）
+  - 修改病人頁面（PatientDetail.tsx）：同步顯示及編輯所有新欄位
+  - 驗證規則：id_type 格式為「兩位數字+英文文字」（例如 `01macauID`、`99other`）；phone 格式為「國際碼-電話號碼」
+  - 欄位排序：基本資料 → 證件資料 → 聯絡資料 → 緊急聯絡人 → 保險 → 系統資訊
+
+### 13.14 重新審視藥物資料表結構
+- 現有 `medications` 表僅 204 筆 Seed 資料，需對比澳門藥物監督管理局（ISAF）已爬取的 9,122 筆藥物資料
+- 評估現有欄位是否足夠（name、generic_name、dosage、route、frequency）
+- 如需對接 ISAF API，需重新設計 `medications` 表結構：
+  - 新欄位候選：product_registration_number（產品註冊編號）、holder（持有人/代理）、manufacturer、active_ingredients、pharmaceutical_form、legal_classification、atc_code、packaging（包裝）、storage_conditions（儲存條件）等
+  - 確保與 ISAF 爬蟲數據欄位對齊
+- 制定資料遷移方案
+
+### 13.15 完善的角色權限資料庫結構
+- 目前 `users.role` 為 ENUM 硬編碼，缺乏靈活性
+- 建立完整 RBAC 權限模型：
+  - `roles` 表：角色定義（admin、doctor、nurse、staff、patient，及自訂角色）
+  - `permissions` 表：權限定義（module + action，例如 `patients:create`、`appointments:delete`）
+  - `role_permissions` 表：角色與權限的多對多映射
+  - `users.role` → 改為 `users.role_id` 外來鍵（可選過渡方案）
+- 前端權限控制：
+  - 路由守衛：根據角色決定可訪問頁面
+  - UI 權限：按鈕/操作的顯示與隱藏
+  - API 權限：中間件驗證模組權限
+
+---
+
 ## 14. 系統連接資訊
 
 | 項目 | 設定值 |
