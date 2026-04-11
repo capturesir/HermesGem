@@ -347,6 +347,8 @@ CREATE TABLE patients (
   emergency_contact_phone2 VARCHAR(30),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_by VARCHAR(36) NOT NULL,
+  created_by_name VARCHAR(100) NOT NULL,
   INDEX idx_patient_number (patient_number),
   INDEX idx_name (name)
 );
