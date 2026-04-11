@@ -991,6 +991,42 @@ CREATE TABLE audit_logs (
 
 ---
 
+### 13.12 病人資料表重整
+- 保留原有欄位，盡量不破壞現有數據遷移
+- 欄位說明：
+
+| 新欄位 | 說明 | 約束 |
+|--------|------|------|
+| `id` | UUID 主鍵 | PK, NOT NULL |
+| `patient_number` | 病人編號 | UNIQUE, NOT NULL |
+| `medical_number` | 醫療號碼（系統內部流水號） | UNIQUE, NULL |
+| `gender` | 性別 | NULL |
+| `birth_date` | 出生日期 | NULL |
+| `gold_card_number` | 金咭編號 | UNIQUE, NULL |
+| `name_tc` | 中文名稱（系統預設姓名） | NOT NULL |
+| `name_en` | 外文姓名 | NULL |
+| `phone1` | 電話1（「國際碼-電話號碼」格式） | UNIQUE, NULL |
+| `phone2` | 電話2 | NULL |
+| `id_type` | 身份識別類型 | NULL |
+| `id_card` | 身份證號（若 id_type='99無證' 可重複；否則 id_type + id_card 合併唯一） | NULL |
+| `address` | 居住地址 | NULL |
+| `email` | 電郵 | NULL |
+| `contact_address` | 聯絡地址 | NULL |
+| `created_at` | 建立日期 | DEFAULT CURRENT_TIMESTAMP |
+| `updated_at` | 更新日期 | ON UPDATE CURRENT_TIMESTAMP |
+| `created_by` | 建立者 ID | FK → users.id, NULL |
+| `created_by_name` | 建立人名稱 | NULL |
+| `insurance_type` | 保險類型 | NULL |
+| `insurance_number` | 保險號碼 | NULL |
+| `emergency_contact_name` | 緊急聯絡人姓名 | NULL |
+| `emergency_contact_address` | 緊急聯絡人通訊地址 | NULL |
+| `emergency_contact_phone1` | 緊急聯絡人電話1 | NULL |
+| `emergency_contact_phone2` | 緊急聯絡人電話2 | NULL |
+
+- **遷移說明**：`name` → `name_tc`；`phone` → `phone1`；`id_card` → `id_card`（id_type 新增）；`address` → `address`（新增 contact_address）；`emergency_contact` → `emergency_contact_name`；`emergency_phone` → `emergency_contact_phone1`
+
+---
+
 ## 14. 系統連接資訊
 
 | 項目 | 設定值 |
