@@ -25,7 +25,7 @@ AIGC:
 | 前端服務 | ✅ 運行中 (port 5176) |
 
 **上次檢查**: 2026-04-09 06:08 (Asia/Macau)
-**Git HEAD**: `ed5fa19` — fix: hide delete (X) button for cancelled and completed appointments
+**Git HEAD**: `2c82602` — feat: add created_by and created_by_name columns to patients table
 
 ---
 
@@ -346,9 +346,9 @@ CREATE TABLE patients (
   emergency_contact_phone VARCHAR(20),
   emergency_contact_phone2 VARCHAR(30),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   created_by VARCHAR(36) NOT NULL,
   created_by_name VARCHAR(100) NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_patient_number (patient_number),
   INDEX idx_name (name)
 );
