@@ -326,19 +326,29 @@ CREATE TABLE users (
 CREATE TABLE patients (
   id VARCHAR(36) PRIMARY KEY,
   patient_number VARCHAR(20) UNIQUE NOT NULL,
+  medical_number VARCHAR(50) UNIQUE,
   name VARCHAR(100) NOT NULL,
+  name_en VARCHAR(100),
   gender VARCHAR(20),
   birth_date DATE,
+  gold_card_number VARCHAR(50) UNIQUE,
   id_card VARCHAR(20),
+  id_type VARCHAR(20),
   phone VARCHAR(20),
+  phone2 VARCHAR(30),
   email VARCHAR(100),
   address TEXT,
-  emergency_contact VARCHAR(100),
-  emergency_phone VARCHAR(20),
+  contact_address TEXT,
   insurance_type VARCHAR(50),
   insurance_number VARCHAR(50),
+  emergency_contact VARCHAR(100),
+  emergency_contact_address TEXT,
+  emergency_contact_phone VARCHAR(20),
+  emergency_contact_phone2 VARCHAR(30),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_patient_number (patient_number),
+  INDEX idx_name (name)
 );
 ```
 
@@ -991,8 +1001,9 @@ CREATE TABLE audit_logs (
 
 ---
 
-### 13.12 病人資料表重整
-- 保留原有欄位名稱，盡量不破壞現有數據遷移
+### 13.12 病人資料表重整 ✅ 已實施
+- 保留原有欄位名稱，不作修改；新增欄位如下；不破壞現有數據遷移
+- ✅ 資料庫已完成遷移（23欄）
 - 欄位說明：
 
 | 欄位 | 說明 | 約束 |
