@@ -63,7 +63,7 @@ AIGC:
 | 優先 | 編號 | 事項 | 說明 |
 |------|------|------|------|
 | P0 | 13.13 | 新增/修改病人頁面配合新25欄結構 | 前端表單急需對應，病人就診功能起點 |
-| P1 | 13.2 | 標籤列印 | 處方藥物標籤列印功能 |
+| P0 | 13.23 | 重要資料表統一審計欄位 | 核心資料表（patients、appointments、soap_notes、prescriptions、documents 等）須具備 `created_by` / `created_by_name` / `created_at` / `updated_by` / `updated_by_name` / `updated_at` 欄位；由 ORM 中介軟體自動填充（不需手動修改業務代碼）；確保操作可追溯至具體人員 |
 | P1 | 13.3 | 文件上傳 | 化驗報告、影像上傳及病人文件庫 |
 | P1 | 13.4 | 批量輸入預約（Excel）| 大量排班需求 |
 | P2 | 13.11 | 外部系統數據互聯 | API 對接澳門衛生局 |
