@@ -237,15 +237,7 @@ def parse_detail(html, searched_name):
             data['active_ingredients_pt'] = '|||'.join(pt_list)
             data['active_ingredients_en'] = '|||'.join(en_list)
 
-        # ── 法定分類（需在 ATC 之前判斷，關鍵字有重疊）──
-        elif any(k in label_text for k in ['法定分類', 'classifica', 'forensic classification']):
-            if not any(k in label_text for k in ['atc', 'who', 'oms', 'terap']):
-                zh, pt, en = parse_trilingual(td_text(value_td))
-                data['legal_classification_zh'] = zh
-                data['legal_classification_pt'] = pt
-                data['legal_classification_en'] = en
-
-        # ── ATC 分類 ──
+        # ── ATC 分類（需在法定分類之前判斷，因關鍵字有重疊）──
         elif any(k in label_text for k in ['atc', 'anatomical therapeutic', 'classificação fármaco']):
             zh, pt, en = parse_trilingual(td_text(value_td))
             code_match = re.match(r'^([A-Z]\d{2}[A-Z]?\s*\d*)', zh)
@@ -253,6 +245,14 @@ def parse_detail(html, searched_name):
             data['atc_classification_zh'] = zh
             data['atc_classification_pt'] = pt
             data['atc_classification_en'] = en
+
+        # ── 法定分類 ──
+        elif any(k in label_text for k in ['法定分類', 'classifica', 'forensic classification']):
+            if not any(k in label_text for k in ['atc', 'who', 'oms', 'terap']):
+                zh, pt, en = parse_trilingual(td_text(value_td))
+                data['legal_classification_zh'] = zh
+                data['legal_classification_pt'] = pt
+                data['legal_classification_en'] = en
 
         # ── 製造商 ──
         elif any(k in label_text for k in ['製造商', 'fabricante', 'manufacturer']):
