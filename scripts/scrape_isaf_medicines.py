@@ -143,19 +143,27 @@ def parse_active_ingredients(td_element):
     返回 (zh_list, pt_list, en_list)
     """
     zh_list, en_list = [], []
-    text_nodes = []
+    br_count = 0
     for child in td_element.children:
-        if isinstance(child, str) and child.strip():
-            text_nodes.append(child.strip())
+        t = type(child).__name__
+        if t == 'Tag' and child.name == 'br':
+            br_count += 1
+            continue
+        if t == 'NavigableString' and child.strip():
+            text = child.strip()
+            br = br_count
+            br_count = 0
+            if br == 0:
+                # 無 br 在前：成份中文名
+                zh_list.append(text)
+            elif br == 1:
+                # 1 個 br 在前：，成份英文名
+                en_list.append(text)
+            elif br >= 2:
+                # 2+ 個 br 在前：新成份中文名
+                zh_list.append(text)
 
-    # 交替：位置 0,2,4... 為中文（成份名稱），位置 1,3,5... 為英文（含劑量）
-    for i, txt in enumerate(text_nodes):
-        if i % 2 == 0:
-            zh_list.append(txt)
-        else:
-            en_list.append(txt)
-
-    # 補足（如果只有奇數個文字節點，最後一個補空字串）
+    # 補足（如果 zh 比 en 多，最後一個 zh 沒有對應英文）
     if len(zh_list) > len(en_list):
         en_list.append('')
 
