@@ -388,8 +388,8 @@ def run():
             r["searched_name"] = searched_name
             results.append(r)
 
-        if i % 30 == 0 and i > 0:
-            time.sleep(random.uniform(0.3, 0.8))
+        if i % 20 == 0 and i > 0:
+            time.sleep(random.uniform(0.5, 1.5))
 
     elapsed = time.time() - start_time
     print("-" * 60)
