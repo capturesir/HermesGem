@@ -63,7 +63,7 @@ AIGC:
 | 優先 | 編號 | 事項 | 說明 |
 |------|------|------|------|
 | P0 | 13.13 | 新增/修改病人頁面配合新25欄結構 | 前端表單急需對應，病人就診功能起點 |
-| P0 | 13.23 | 重要資料表統一審計欄位（資料庫層面）| 未來會逐一擴增核心資料表的資料欄位（patients、appointments、soap_notes、prescriptions、documents 等），以加入 `created_by` / `created_by_name` / `created_at` / `updated_by` / `updated_by_name` / `updated_at` 等相應欄位為目標；儘量先保持原有欄位名稱不變（已有相同意義欄位者保留原名，只做擴增不作強行改名）；每個資料表需獨立 migration；由 ORM 中介軟體自動填充（不需業務代碼手動填寫）；暂不修改代碼，留待未來逐一處理 |
+| P0 | 13.23 | 重要資料表統一審計欄位（資料庫層面，純遷移）| 未來會逐一擴增核心資料表的資料欄位（patients、appointments、soap_notes、prescriptions、documents 等），以加入 `created_by` / `created_by_name` / `created_at` / `updated_by` / `updated_by_name` / `updated_at` 等相應欄位為目標；儘量先保持原有欄位名稱不變（已有相同意義欄位者保留原名，只做擴增不作強行改名）；每個資料表需獨立 migration；純資料庫層面遷移，**不涉及 ORM 中介軟體**，暂不修改代碼，留待未來逐一處理 |
 | P1 | 13.3 | 文件上傳 | 化驗報告、影像上傳及病人文件庫 |
 | P1 | 13.4 | 批量輸入預約（Excel）| 大量排班需求 |
 | P2 | 13.11 | 外部系統數據互聯 | API 對接澳門衛生局 |
