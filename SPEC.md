@@ -77,7 +77,7 @@ AIGC:
 | P1 | 13.20 | 支援多語言介面 | 中文/英文/葡文三語界面，切換靈活 |
 | P1 | 13.20 | 支援多語言介面 | 中文/英文/葡文三語界面，切換靈活 |
 | P1 | 13.21 | 支援系統多顏色主題 | 多套主題切換，支援深色模式 |
-| P1 | 13.22 | 審計日誌自動化（Prisma $extends / TypeORM Subscriber）| 利用 ORM 中介軟體自動攔截所有 UPDATE/CREATE/DELETE 操作，寫入 audit_logs 表；`details` 欄位改為 MySQL JSON 型別；支援查詢操作者、時間、IP、變更內容；**與 13.23 配套**——13.23 負責在業務資料表擴增 created_by/updated_by 等審計欄位，13.22 的 ORM 中介軟體自動讀取並寫入 audit_logs.details，令操作可完整追溯；相關 issue：K06 |
+| P1 | 13.22 | 審計日誌自動化（Prisma $extends / TypeORM Subscriber）| **核心改變**：拋棄目前各 Controller / Service 內人手呼叫 `logAudit()` 的方式，全面改用 ORM 中介軟體自動攔截所有 UPDATE/CREATE/DELETE 操作，寫入 audit_logs 表。具體效益：① **自動獲取當前登入者 ID 和姓名**（中介軟體可直 接從 Request Context 拿），毋須每處人手傳遞；② **零遺漏**——所有經過 ORM 的操作一律自動記錄，唔會因 developer 忘記擺 `logAudit()` 而漏記；③ **代碼整潔易調試**——業務邏碼與審計日誌完全解耦。`details` 欄位已改為 MySQL JSON 型別，13.22 ORM 中介軟體自動填寫變更前後的具體差異；**與 13.23 配套**——13.23 在業務資料表擴增 created_by/updated_by 等欄位，13.22 中介軟體自動讀取並寫入 audit_logs.details，令操作完整追溯；相關 issue：K06 |
 | P2 | 13.5 | 系統設定（名稱/Logo 自訂）| 管理功能 |
 | P2 | 13.6 | 預約排序功能 | 按地址/姓名/時間排序 |
 | P2 | 13.7 | 預約管理日期快速切換 | 左右箭嘴快速切換日期 |
