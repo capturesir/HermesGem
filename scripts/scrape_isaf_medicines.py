@@ -192,7 +192,7 @@ def parse_detail(html, option_texts):
 
         # ── 商品名稱 ──
         if any(k in label_text for k in ["商品名稱", "nome comercial", "commercial name"]):
-            zh, pt, en = parse_product_name(option_texts, td_text(value_td))
+            zh, pt, en = parse_product_name(td_text(value_td), option_texts[0] if option_texts else "")
             data["product_name_zh"] = zh
             data["product_name_pt"] = pt
             data["product_name_en"] = en
@@ -266,37 +266,31 @@ def parse_detail(html, option_texts):
 
 def parse_product_name(text, searched_name):
     """
-    解析商品名稱。
-    HTML 中無 <br>，文字全部串聯。
-    規則：永遠前半是中文，後半是英文。
-    找 searched_name 在文字中的位置，從該位置往前找第一個空格作為分界。
-    若無空格，fallback 到 rfind(' ')。
+    解析商品名稱（text = 詳情頁的原始文字，searched_name = 清單頁的英文名）。
+    text 格式：中英文直接串聯，無分隔符。
+    演算法：searched_name 在 text 中的位置已知，以此為分界。
+      - 從分界向前找最後一個空格作為 split point
+      - 該空格之前 = 中文名（去除頭尾空白）
+      - 分界起點到結尾 = 英文名
     """
     if "||BRK||" in text:
-        zh, pt, en = split_trilingual(text)
-        return zh, pt, en
+        return split_trilingual(text)
 
     pos = text.find(searched_name)
-    if pos >= 0:
-        sp = -1
-        for i in range(pos - 1, -1, -1):
-            if text[i] == ' ':
-                sp = i
-                break
-        if sp < 0:
-            # searched_name 前無空格 → fallback 到 rfind
-            sp = text.rfind(' ')
-        if sp < 0:
-            return text.strip(), '', ''
-        before = text[:sp].strip()
-        after = text[sp + 1:].strip()
-    else:
-        sp = text.rfind(' ')
-        if sp < 0:
-            return text.strip(), '', ''
-        before = text[:sp].strip()
-        after = text[sp + 1:].strip()
+    if pos < 0:
+        # fallback：直接以中文字數估算
+        zh_len = sum(1 for c in text if '\u4e00' <= c <= '\u9fff' or c in '（）()【】[]')
+        zh = text[:zh_len].strip()
+        en = text[zh_len:].strip()
+        return zh, '', en
 
+    # searched_name 前最後一個空格
+    sp = text.rfind(' ', 0, pos)
+    if sp < 0:
+        return text[:pos].strip(), '', searched_name
+
+    before = text[:sp].strip()
+    after = text[pos:].strip()
     return before, '', after
 
 # ─────────────────────────────────────────
