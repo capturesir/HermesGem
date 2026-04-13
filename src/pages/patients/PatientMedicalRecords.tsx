@@ -27,9 +27,10 @@ const PatientMedicalRecords: React.FC = () => {
   const { getPatientById, addSOAPNote, updateSOAPNote, deleteSOAPNote, addPrescription, updatePrescription, deletePrescription } = useData();
   const { showToast } = useToast();
 
+  const patient = getPatientById(id || '');
+
   const [soapNotes, setSoapNotes] = useState<SOAPNote[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
-  const patient = getPatientById(id || '');
 
   const loadRecords = useCallback(async (patientId: string) => {
     try {
@@ -106,17 +107,6 @@ const PatientMedicalRecords: React.FC = () => {
       setAutoExpanded(true);
     }
   }, [allRecords, autoExpanded]);
-
-  if (!patient) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-slate-900">找不到此病人</h2>
-        <Link to="/patients" className="text-blue-600 hover:text-blue-700 mt-4 inline-block">
-          返回病人列表
-        </Link>
-      </div>
-    );
-  }
 
   // Filter records
   const filteredRecords = useMemo(() => {
@@ -332,7 +322,14 @@ const PatientMedicalRecords: React.FC = () => {
     return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
   };
 
-  return (
+  return !patient ? (
+    <div className="text-center py-12">
+      <h2 className="text-xl font-semibold text-slate-900">找不到此病人</h2>
+      <Link to="/patients" className="text-blue-600 hover:text-blue-700 mt-4 inline-block">
+        返回病人列表
+      </Link>
+    </div>
+  ) : (
     <div className="max-w-full mx-auto">
       {/* Compact Header */}
       <div className="flex items-center justify-between mb-4">
