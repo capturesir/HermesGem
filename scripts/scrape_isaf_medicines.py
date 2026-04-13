@@ -194,10 +194,32 @@ def parse_detail(html, option_texts):
 
         # ── 商品名稱 ──
         if any(k in label_text for k in ["商品名稱", "nome comercial", "commercial name"]):
-            zh, pt, en = parse_product_name(td_text(value_td), option_texts[0] if option_texts else "")
-            data["product_name_zh"] = zh
-            data["product_name_pt"] = pt
-            data["product_name_en"] = en
+            full_name = td_text(value_td)
+            # 分離中文 / 英文 option
+            zh_option = None
+            en_option = None
+            for opt in option_texts:
+                if re.search(r'[\u4e00-\u9fff]', opt):
+                    zh_option = opt
+                else:
+                    en_option = opt
+            # 確認兩者在 full_name 中的位置
+            zh_pos = full_name.find(zh_option) if zh_option else -1
+            en_pos = full_name.find(en_option) if en_option else -1
+
+            if zh_pos == 0:
+                # 中文在前面：中文=zh_option，英文=其後所有文字
+                data["product_name_zh"] = zh_option
+                data["product_name_en"] = full_name[len(zh_option):].strip()
+            elif en_pos == 0:
+                # 英文在前面：英文=en_option，中文=其後所有文字
+                data["product_name_en"] = en_option
+                data["product_name_zh"] = full_name[len(en_option):].strip()
+            else:
+                # 兩者都不在開頭 → fallback：用長度估算
+                zh, en = parse_product_name(full_name, en_option or zh_option or "")
+                data["product_name_zh"] = zh
+                data["product_name_en"] = en
 
         # ── 劑型 ──
         elif any(k in label_text for k in ["劑型", "forma farmac", "pharmaceutical form"]):
