@@ -399,7 +399,7 @@ def run(limit=None):
             results.append(r)
 
         if i % 20 == 0 and i > 0:
-            time.sleep(random.uniform(0.5, 1.5))
+            time.sleep(random.uniform(0, 1))
 
     elapsed = time.time() - start_time
     print("-" * 60)
