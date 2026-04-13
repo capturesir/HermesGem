@@ -109,43 +109,39 @@ def parse_product_name(value_td, searched_name):
         # 直接在原文 text 中找 searched_name 的位置（保留所有引號）
         pos = text.find(searched_name)
         if pos >= 0:
-            before = text[:pos].strip()
-            after = text[pos + len(searched_name):].strip()
+            before = text[:pos]
+            after = text[pos + len(searched_name):]
         else:
-            # Fallback: 去除所有 " 後再匹配
+            # Fallback: 去除 " 後再匹配
             en_clean = searched_name.replace('"', '')
             text_nq = text.replace('"', '')
             pos_in_nq = text_nq.find(en_clean)
             if pos_in_nq >= 0:
                 quotes_removed = sum(1 for ch in text[:pos_in_nq] if ch == '"')
                 orig_pos = pos_in_nq + quotes_removed
-                before = text[:orig_pos].strip()
-                after = text[orig_pos + len(searched_name):].strip()
+                before = text[:orig_pos]
+                after = text[orig_pos + len(searched_name):]
             else:
-                # 無法以 searched_name 定位：根據語言自動分割
-                # 跳過所有 " 和 ASCII 字母數字，找到第一個中文
-                split_idx = 0
+                # 無法定位：根據第一個 ASCII 字母位置分割
+                split_idx = len(text)
                 for i, ch in enumerate(text):
                     code = ord(ch)
-                    is_ascii_letter = (65 <= code <= 90) or (97 <= code <= 122) or (48 <= code <= 57)
-                    if is_ascii_letter:
+                    if (65 <= code <= 90) or (97 <= code <= 122) or (48 <= code <= 57):
                         split_idx = i
                         break
-                else:
-                    split_idx = len(text)
-                before = text[:split_idx].strip()
-                after = text[split_idx:].strip()
-        # 根據語言判斷哪段是中文哪段是英文
-        if is_chinese(searched_name):
-            zh = before if before else after
-            en = after if before else ''
+                before = text[:split_idx]
+                after = text[split_idx:]
+
+        before = before.strip()
+        after = after.strip()
+
+        # 根據各段中文字符數量判斷哪段是中文（最精確的判斷方式）
+        zh_count_before = len(re.findall(r'[\u4e00-\u9fff]', before))
+        zh_count_after = len(re.findall(r'[\u4e00-\u9fff]', after))
+        if zh_count_before >= zh_count_after:
+            zh, en = before, after
         else:
-            # searched_name 為英文：before 為中文（在前），after 為英文（在後）
-            # 當 before 為空時說明分割位置在文字開頭，實際的中文 portion 在 after
-            if is_chinese(before):
-                zh, en = before, after
-            else:
-                zh, en = after, before
+            zh, en = after, before
         return zh, '', en
 
     # 有 ||BRK|| 的情况：直接二分，保留所有引號原文
