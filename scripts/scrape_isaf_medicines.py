@@ -97,8 +97,7 @@ def parse_product_name(value_td, searched_name):
     """
     解析詳情頁「商品名稱」欄位。
     - 若有 ||BRK||：以 <br> 分隔，name_a = 第一語言，name_b = 第二語言
-    - 若無 ||BRK||：將 searched_name 從 value 文本中去除，剩餘為另一語言
-      （剥離所有 " 後再定位，適用於 "中文名"EN 或 EN"中文名" 結構）
+    - 若無 ||BRK||：直接以 searched_name 在原文定位，保留所有引號
     """
     text = td_text(value_td).strip()
 
@@ -107,32 +106,65 @@ def parse_product_name(value_td, searched_name):
         name_a = parts[0]
         name_b = parts[1] if len(parts) > 1 else ''
     else:
-        # 剥離所有 "，再定位 searched
-        text_nq = text.replace('"', '')
-        searched_nq = searched_name.replace('"', '')
-        idx = text_nq.find(searched_nq)
-        if idx >= 0:
-            before = text_nq[:idx].strip()
-            after = text_nq[idx + len(searched_nq):].strip()
+        # 直接在原文 text 中找 searched_name 的位置（保留所有引號）
+        pos = text.find(searched_name)
+        if pos >= 0:
+            before = text[:pos].strip()
+            after = text[pos + len(searched_name):].strip()
         else:
-            before, after = '', text_nq
-
+            # Fallback: 去除所有 " 後再匹配
+            en_clean = searched_name.replace('"', '')
+            text_nq = text.replace('"', '')
+            pos_in_nq = text_nq.find(en_clean)
+            if pos_in_nq >= 0:
+                quotes_removed = sum(1 for ch in text[:pos_in_nq] if ch == '"')
+                orig_pos = pos_in_nq + quotes_removed
+                before = text[:orig_pos].strip()
+                after = text[orig_pos + len(searched_name):].strip()
+            else:
+                # 無法以 searched_name 定位：根據語言自動分割
+                # 跳過所有 " 和 ASCII 字母數字，找到第一個中文
+                split_idx = 0
+                for i, ch in enumerate(text):
+                    code = ord(ch)
+                    is_ascii_letter = (65 <= code <= 90) or (97 <= code <= 122) or (48 <= code <= 57)
+                    if is_ascii_letter:
+                        split_idx = i
+                        break
+                else:
+                    split_idx = len(text)
+                before = text[:split_idx].strip()
+                after = text[split_idx:].strip()
+        # 根據語言判斷哪段是中文哪段是英文
         if is_chinese(searched_name):
-            zh = searched_nq
-            en = after
+            zh = before if before else after
+            en = after if before else ''
         else:
-            zh = before
-            en = searched_nq
+            # searched_name 為英文：before 為中文（在前），after 為英文（在後）
+            # 當 before 為空時說明分割位置在文字開頭，實際的中文 portion 在 after
+            if is_chinese(before):
+                zh, en = before, after
+            else:
+                zh, en = after, before
         return zh, '', en
 
-    # 有 ||BRK|| 的情况：直接二分
-    if is_chinese(searched_name):
-        zh = name_b if is_chinese(name_b) else name_a
-        en = name_a if not is_chinese(name_a) else name_b
+    # 有 ||BRK|| 的情况：直接二分，保留所有引號原文
+    # 根據各段本身的語言來判斷，而非根據 searched_name
+    if is_chinese(name_a) and not is_chinese(name_b):
+        # name_a = 中文, name_b = 英文 → 正確順序
+        zh, en = name_a, name_b
+    elif not is_chinese(name_a) and is_chinese(name_b):
+        # name_a = 英文, name_b = 中文 → 交換
+        zh, en = name_b, name_a
     else:
-        en = name_a if not is_chinese(name_a) else name_b
-        zh = name_b if is_chinese(name_b) else ''
-    return zh.strip(), '', en.strip()
+        # 同為中文或同為英文：根據 searched_name 判斷
+        if is_chinese(searched_name):
+            zh = name_b if is_chinese(name_b) else name_a
+            en = name_a if not is_chinese(name_a) else name_b
+        else:
+            en = name_a if not is_chinese(name_a) else name_b
+            zh = name_b if is_chinese(name_b) else ''
+    return zh, '', en
 
 
 def parse_active_ingredients(td_element):
