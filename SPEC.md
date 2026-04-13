@@ -24,8 +24,9 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-09 06:08 (Asia/Macau)
-**Git HEAD**: `2c82602` — feat: add created_by and created_by_name columns to patients table
+**上次檢查**: 2026-04-14 06:08 (Asia/Macau)
+**Git HEAD**: `7a5bf70` — chore: 完整爬蟲v2（9107筆成功率99.9%，修正商品名稱解析邏輯）
+**注意**: HEAD 已推進（較上次落後），需確認是否需要 revert 或維護 EMR 代碼分支
 
 ---
 
