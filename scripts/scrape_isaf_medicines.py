@@ -106,36 +106,32 @@ def parse_product_name(value_td, searched_name):
         name_a = parts[0]
         name_b = parts[1] if len(parts) > 1 else ''
     else:
-        # 直接在原文 text 中找 searched_name 的位置（保留所有引號）
-        pos = text.find(searched_name)
-        if pos >= 0:
-            before = text[:pos]
-            after = text[pos + len(searched_name):]
-        else:
-            # Fallback: 去除 " 後再匹配
+        # 無 <br> 分隔：HTML 中所有文字連接在一起，無真實分隔符
+        # 策略：用 rfind() 找 searched_name 最後一次出現（真正的分界點）
+        # 例：'"歐業"賜爾鼻好膠囊 "O.Y." SULPIHO CAPSULES'
+        #     searched_name = '"O.Y." SULPIHO CAPSULES'
+        #     rfind() → 位置在倒數第二個 " 之後，分界正確
+        pos = text.rfind(searched_name)
+        if pos < 0:
+            # Fallback: 去除 " 後匹配（適用於 searched_name 含有 " 但 HTML 中沒有 " 的情況）
             en_clean = searched_name.replace('"', '')
             text_nq = text.replace('"', '')
-            pos_in_nq = text_nq.find(en_clean)
-            if pos_in_nq >= 0:
-                quotes_removed = sum(1 for ch in text[:pos_in_nq] if ch == '"')
-                orig_pos = pos_in_nq + quotes_removed
-                before = text[:orig_pos]
-                after = text[orig_pos + len(searched_name):]
-            else:
-                # 無法定位：根據第一個 ASCII 字母位置分割
-                split_idx = len(text)
-                for i, ch in enumerate(text):
-                    code = ord(ch)
-                    if (65 <= code <= 90) or (97 <= code <= 122) or (48 <= code <= 57):
-                        split_idx = i
-                        break
-                before = text[:split_idx]
-                after = text[split_idx:]
+            pos_in_nq = text_nq.rfind(en_clean)
+            if pos_in_nq < 0:
+                return text.strip(), '', ''
+            quotes_before = sum(1 for ch in text[:pos_in_nq] if ch == '"')
+            pos = pos_in_nq + quotes_before
 
-        before = before.strip()
-        after = after.strip()
+        before = text[:pos].strip()
+        after = text[pos + len(searched_name):].strip()
 
-        # 根據各段中文字符數量判斷哪段是中文（最精確的判斷方式）
+        # 特殊情況：searched_name 本身含中文，且出現在 text 開頭
+        # → searched_name 是中文名，after 是英文名
+        if pos == 0 and is_chinese(searched_name):
+            return searched_name, '', after
+
+
+        # 根據 Chinese char 數量判斷哪段是中文
         zh_count_before = len(re.findall(r'[\u4e00-\u9fff]', before))
         zh_count_after = len(re.findall(r'[\u4e00-\u9fff]', after))
         if zh_count_before >= zh_count_after:
