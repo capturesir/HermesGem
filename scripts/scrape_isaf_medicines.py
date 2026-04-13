@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-澳門藥物監督管理局 (ISAF) 藥品資料爬蟲 v4
+澳門藥物監督管理局 (ISAF) 藥品資料爬蟲 v5
 目標: 抓取全部藥品詳細資料（9,118 筆），輸出為 CSV + PDF
 
 25 欄位設計：
@@ -63,6 +63,7 @@ FIELDS = [
     # 製造商
     "manufacturer_zh", "manufacturer_pt", "manufacturer_en",
     # 供應商
+    "distributor_code",
     "distributor_zh", "distributor_pt", "distributor_en",
 ]
 
@@ -100,13 +101,14 @@ def parse_active_ingredients(text):
     while i < len(parts):
         zh = parts[i].strip()
         en = parts[i + 1].strip() if i + 1 < len(parts) else ""
-        pt = ""  # 活性成份通常無葡文
         i += 2
         if zh or en:
             zh_list.append(zh)
-            pt_list.append(pt)
             en_list.append(en)
-    return zh_list, pt_list, en_list
+            # PT 永為空（無葡文），不追加 entry
+            # PT 欄：全為空則留空白，否則以 ||| 連接
+            pt_all = "|||".join([p for p in pt_list if p]) if pt_list else ""
+            return zh_list, pt_all, en_list
 
 
 def has_diacritics(s):
@@ -228,6 +230,9 @@ def parse_detail(html, searched_name):
             data["distributor_zh"] = zh
             data["distributor_pt"] = pt
             data["distributor_en"] = en
+            # 從供應商中文名稱開頭提取公司編號（如 FI0220）
+            code_match = re.match(r"^([A-Z]{2}\d{4})", zh)
+            data["distributor_code"] = code_match.group(1) if code_match else ""
 
     return data
 
@@ -235,43 +240,37 @@ def parse_detail(html, searched_name):
 def parse_product_name(text, searched_name):
     """
     解析商品名稱。
-    HTML 中無 <br>，文字全部串聯，以 rfind(searched_name) 定位分界。
+    HTML 中無 <br>，文字全部串聯。
+    規則：永遠前半是中文，後半是英文。
+    找 searched_name 在文字中的位置，從該位置往前找第一個空格作為分界。
+    若無空格，fallback 到 rfind(' ')。
     """
     if "||BRK||" in text:
-        # 有真實 <br> 分隔（理論上不存在，保守處理）
         zh, pt, en = split_trilingual(text)
         return zh, pt, en
 
-    # 無 <br>：文字全部串聯
-    pos = text.rfind(searched_name)
-    if pos < 0:
-        # Fallback: 去除 " 後匹配
-        en_clean = searched_name.replace('"', "")
-        text_nq = text.replace('"', "")
-        pos_in_nq = text_nq.rfind(en_clean)
-        if pos_in_nq < 0:
-            return text.strip(), "", ""
-        quotes_before = sum(1 for ch in text[:pos_in_nq] if ch == '"')
-        pos = pos_in_nq + quotes_before
-
-    before = text[:pos]
-    after = text[pos + len(searched_name):]
-
-    def zh_count(s):
-        return len(re.findall(r"[\u4e00-\u9fff]", s))
-
-    # 特殊情況：searched_name 含中文且在 text 開頭
-    has_zh = bool(re.search(r"[\u4e00-\u9fff]", searched_name))
-    if pos == 0 and has_zh:
-        return searched_name.strip(), "", after.strip()
-
-    zh_c = zh_count(before)
-    en_c = zh_count(after)
-    if zh_c >= en_c:
-        return before.strip(), "", after.strip()
+    pos = text.find(searched_name)
+    if pos >= 0:
+        sp = -1
+        for i in range(pos - 1, -1, -1):
+            if text[i] == ' ':
+                sp = i
+                break
+        if sp < 0:
+            # searched_name 前無空格 → fallback 到 rfind
+            sp = text.rfind(' ')
+        if sp < 0:
+            return text.strip(), '', ''
+        before = text[:sp].strip()
+        after = text[sp + 1:].strip()
     else:
-        return after.strip(), "", before.strip()
+        sp = text.rfind(' ')
+        if sp < 0:
+            return text.strip(), '', ''
+        before = text[:sp].strip()
+        after = text[sp + 1:].strip()
 
+    return before, '', after
 
 # ─────────────────────────────────────────
 # 搜尋
