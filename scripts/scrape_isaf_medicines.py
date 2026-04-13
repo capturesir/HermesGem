@@ -380,11 +380,15 @@ def clean(t):
 # 主程式
 # ─────────────────────────────────────────
 
-def run():
+def run(limit=None):
     records = search_all()
     if not records:
         print("找不到任何記錄，結束")
         return
+
+    if limit:
+        records = records[:limit]
+        print(f"  ⚠️ 測試模式：只抓取前 {limit} 筆記錄")
 
     total = len(records)
     results = []
@@ -435,4 +439,8 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    import argparse
+    parser = argparse.ArgumentParser(description="ISAF 澳門藥物資料爬蟲")
+    parser.add_argument("--limit", type=int, default=None, help="測試模式：只抓取前 N 筆記錄")
+    args = parser.parse_args()
+    run(limit=args.limit)
