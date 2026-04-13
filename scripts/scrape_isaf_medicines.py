@@ -169,7 +169,7 @@ def parse_detail(html, option_texts):
 
         # ── 商品名稱 ──
         if any(k in label_text for k in ["商品名稱", "nome comercial", "commercial name"]):
-            zh, pt, en = parse_product_name(option_texts)
+            zh, pt, en = parse_product_name(option_texts, td_text(value_td))
             data["product_name_zh"] = zh
             data["product_name_pt"] = pt
             data["product_name_en"] = en
