@@ -217,8 +217,9 @@ def parse_detail(html, option_texts):
                 data["product_name_zh"] = full_name[len(en_option):].strip()
             else:
                 # 兩者都不在開頭 → fallback：用長度估算
-                zh, en = parse_product_name(full_name, en_option or zh_option or "")
+                zh, pt, en = parse_product_name(full_name, en_option or zh_option or "")
                 data["product_name_zh"] = zh
+                data["product_name_pt"] = pt
                 data["product_name_en"] = en
 
         # ── 劑型 ──
