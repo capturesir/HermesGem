@@ -143,8 +143,31 @@ def parse_manufacturer_distributor(text):
 
 
 # ─────────────────────────────────────────
-# 詳情頁解析
+# 列表頁快取（避免每筆記錄重複抓取 9118 個 option）
 # ─────────────────────────────────────────
+_OPTION_TEXTS_CACHE = {}  # {rid: [text1, text2, ...]}
+
+def _fetch_all_option_texts_cached():
+    """一次性抓取整個列表頁所有 option 文字至模組快取"""
+    if _OPTION_TEXTS_CACHE:
+        return  # 已有快取，直接使用
+    r = requests.post(SEARCH_URL, data={
+        "inputQuery": "%%",
+        "sTypeStr": "searchByComName",
+    }, timeout=60, headers=HEADERS)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    for opt in soup.find("select").find_all("option"):
+        vid = opt.get("value", "").strip()
+        if vid.isdigit():
+            if vid not in _OPTION_TEXTS_CACHE:
+                _OPTION_TEXTS_CACHE[vid] = []
+            _OPTION_TEXTS_CACHE[vid].append("".join(opt.strings))
+
+def get_option_texts(rid):
+    """從列表頁取得指定藥物的所有 option 文字（使用模組快取）"""
+    _fetch_all_option_texts_cached()
+    return _OPTION_TEXTS_CACHE.get(rid, [])
 
 def parse_detail(html, option_texts):
     """解析詳細頁 HTML"""
@@ -292,16 +315,16 @@ def get_session():
 
 
 def search_all():
-    """取得所有藥品記錄 ID"""
+    """取得所有藥品記錄 ID（同時填充 _OPTION_TEXTS_CACHE）"""
     print("正在取得全部藥品 ID 及名稱...")
     s = get_session()
     resp = s.post(SEARCH_URL, data={
         "inputQuery": "%%",
         "sTypeStr": "searchByComName",
-    }, timeout=30)
+    }, timeout=60)
     resp.raise_for_status()
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    soup = BeautifulSoup(resp.text, "lxml")
     select = soup.find("select")
     records = []
 
@@ -311,6 +334,10 @@ def search_all():
             name = opt.get_text(strip=True)
             if vid.isdigit():
                 records.append((vid, name))
+                # 同步填充快取
+                if vid not in _OPTION_TEXTS_CACHE:
+                    _OPTION_TEXTS_CACHE[vid] = []
+                _OPTION_TEXTS_CACHE[vid].append("".join(opt.strings))
 
     seen = set()
     unique = []
