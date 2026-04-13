@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """
-澳門藥物監督管理局 (ISAF) 藥品資料爬蟲 v3
-目標: 抓取所有藥品詳細資料（11,256 筆），輸出為 CSV
+澳門藥物監督管理局 (ISAF) 藥品資料爬蟲 v4
+目標: 抓取全部藥品詳細資料（9,118 筆），輸出為 CSV + PDF
 
-解析邏輯（重要）：
-- 搜尋 %% 返回所有記錄（約 11,256 筆）
-- 點擊任一藥品名稱 → 該文字即為藥品名稱（單一語言），先記住
-- 按「詳情」進入詳細頁，表格第一列「商品名稱」= 記住之名稱 + 另一語言之名稱
-- 每個項目的第一個 <td>：中文<br>葡文<br>英文
-- 每個項目的第二個 <td>：資料，順序固定 中文 + <br> + 葡文 + <br> + 英文
-  - 若只有 2 個 <br>：中文 + 英文（跳過葡文）
-  - 活性成份：多個成份以兩個接連 <br> 分隔
+25 欄位設計：
+  mednbr（藥物編號）
+  + 8 類別 × 3 語言（中、葡、英）= 25 欄
+
+HTML 結構說明：
+  - 各 td 以 <br> 分隔三語
+  - 雙 <br> = 不同成份之間的分隔
+  - 無 <br> 的 td（如商品名稱）為 CSS ::before 換行，文字全部串聯
+  - 所有資料完整保留，不做任何去除或格式化
+
+active_ingredients：多個成份以 ||| 分隔，同一成份內中/葡/英以 ^^^ 分隔
 """
 
 import requests
@@ -42,177 +45,99 @@ HEADERS = {
 CSV_FILE = "/home/gem-openclaw/project/simple-medical-system/data/isaf_medicines.csv"
 PARSER = "lxml"
 
-# CSV 欄位
+# 25 欄位（中、葡、英各自獨立欄）
 FIELDS = [
-    "record_id",
-    "searched_name",   # 搜尋列表頁顯示的原始名稱
+    "mednbr",
     # 商品名稱
     "product_name_zh", "product_name_pt", "product_name_en",
     # 劑型
     "pharmaceutical_form_zh", "pharmaceutical_form_pt", "pharmaceutical_form_en",
     # 投藥途徑
     "route_of_administration_zh", "route_of_administration_pt", "route_of_administration_en",
-    # 活性成份（多個以 ||| 分隔）
+    # 活性成份（多個以 ||| 分隔，同成份中/葡/英以 ^^^ 分隔）
     "active_ingredients_zh", "active_ingredients_pt", "active_ingredients_en",
     # 法定分類
     "legal_classification_zh", "legal_classification_pt", "legal_classification_en",
     # ATC 分類
     "atc_code", "atc_classification_zh", "atc_classification_pt", "atc_classification_en",
     # 製造商
-    "manufacturer_code", "manufacturer_zh", "manufacturer_en",
+    "manufacturer_zh", "manufacturer_pt", "manufacturer_en",
     # 供應商
-    "distributor_code", "distributor_zh", "distributor_en",
+    "distributor_zh", "distributor_pt", "distributor_en",
 ]
 
 
-def is_chinese(s):
-    return bool(re.search(r'[\u4e00-\u9fff]', s or ''))
-
-
-# ─────────────────────────────────────────
-# 解析工具
-# ─────────────────────────────────────────
-
 def td_text(td_element):
-    """從 BeautifulSoup <td> 元素提取文字，<br> 置換為 ||BRK||"""
-    return td_element.get_text(separator='||BRK||', strip=True)
+    """從 td 元素提取文字，<br> 置換為 ||BRK||"""
+    return td_element.get_text(separator="||BRK||", strip=False)
 
 
-def parse_trilingual(text):
+def split_trilingual(text):
     """
-    解析標準三語欄位：中文 ||BRK|| 葡文 ||BRK|| 英文
-    若只有 2 段（中 + 英），跳過葡文位置
+    解析標準三語欄位：段0 ||BRK|| 段1 ||BRK|| 段2
+    直接以 ||BRK|| 分隔，保留所有原文，不做任何格式化。
     """
-    parts = [p.strip() for p in text.split('||BRK||') if p.strip()]
-    if len(parts) >= 3:
-        return parts[0], parts[1], parts[2]
-    elif len(parts) == 2:
-        return parts[0], '', parts[1]
-    elif len(parts) == 1:
-        return parts[0], '', ''
-    return '', '', ''
+    parts = text.split("||BRK||")
+    zh = parts[0].strip() if len(parts) > 0 else ""
+    pt = parts[1].strip() if len(parts) > 1 else ""
+    en = parts[2].strip() if len(parts) > 2 else ""
+    return zh, pt, en
 
 
-def parse_product_name(value_td, searched_name):
+def parse_active_ingredients(text):
     """
-    解析詳情頁「商品名稱」欄位。
-    - 若有 ||BRK||：以 <br> 分隔，name_a = 第一語言，name_b = 第二語言
-    - 若無 ||BRK||：直接以 searched_name 在原文定位，保留所有引號
+    解析活性成份。
+    結構（get_text 結果）：name_zh ||BRK|| name_en ||BRK|| name_zh ||BRK|| name_en ...
+    - 每兩個相鄰段 = 一個成份（奇數位置=zh，偶數位置=en）
+    - 總段數為奇數時，最後一個 zh 無對應 en
     """
-    text = td_text(value_td).strip()
+    zh_list, pt_list, en_list = [], [], []
 
-    if '||BRK||' in text:
-        parts = [p.strip() for p in text.split('||BRK||') if p.strip()]
-        name_a = parts[0]
-        name_b = parts[1] if len(parts) > 1 else ''
-    else:
-        # 無 <br> 分隔：HTML 中所有文字連接在一起，無真實分隔符
-        # 策略：用 rfind() 找 searched_name 最後一次出現（真正的分界點）
-        # 例：'"歐業"賜爾鼻好膠囊 "O.Y." SULPIHO CAPSULES'
-        #     searched_name = '"O.Y." SULPIHO CAPSULES'
-        #     rfind() → 位置在倒數第二個 " 之後，分界正確
-        pos = text.rfind(searched_name)
-        if pos < 0:
-            # Fallback: 去除 " 後匹配（適用於 searched_name 含有 " 但 HTML 中沒有 " 的情況）
-            en_clean = searched_name.replace('"', '')
-            text_nq = text.replace('"', '')
-            pos_in_nq = text_nq.rfind(en_clean)
-            if pos_in_nq < 0:
-                return text.strip(), '', ''
-            quotes_before = sum(1 for ch in text[:pos_in_nq] if ch == '"')
-            pos = pos_in_nq + quotes_before
-
-        before = text[:pos].strip()
-        after = text[pos + len(searched_name):].strip()
-
-        # 特殊情況：searched_name 本身含中文，且出現在 text 開頭
-        # → searched_name 是中文名，after 是英文名
-        if pos == 0 and is_chinese(searched_name):
-            return searched_name, '', after
+    # 以雙 ||BRK|| 分割不同成份（每一個成份以 ||BRK|| 分隔中/英）
+    # "||BRK||".split("||BRK||") → ["", ""]，中間空字串代表一個成份的空英/en
+    parts = text.split("||BRK||")
+    i = 0
+    while i < len(parts):
+        zh = parts[i].strip()
+        en = parts[i + 1].strip() if i + 1 < len(parts) else ""
+        pt = ""  # 活性成份通常無葡文
+        i += 2
+        if zh or en:
+            zh_list.append(zh)
+            pt_list.append(pt)
+            en_list.append(en)
+    return zh_list, pt_list, en_list
 
 
-        # 根據 Chinese char 數量判斷哪段是中文
-        zh_count_before = len(re.findall(r'[\u4e00-\u9fff]', before))
-        zh_count_after = len(re.findall(r'[\u4e00-\u9fff]', after))
-        if zh_count_before >= zh_count_after:
-            zh, en = before, after
+def has_diacritics(s):
+    """檢查是否包含葡文特有的變音字母"""
+    return bool(re.search(r'[ãáàâçõéèêíìóòôúùü]', s, re.IGNORECASE))
+
+
+def parse_manufacturer_distributor(text):
+    """
+    解析製造商 / 供應商。
+    根據 parts 數量與內容自動判斷：
+    - 4+ parts: 3語言齊全，取前三非空段
+    - 3 parts: 自動識別 b 為葡文（FIRMA/COMPANHIA/LDA）還是英文
+    """
+    parts = text.split("||BRK||")
+    parts = [p.strip() for p in parts if p.strip() or len(parts) <= 3]
+
+    if len(parts) >= 4:
+        non_empty = [p for p in parts if p]
+        if len(non_empty) >= 3:
+            return non_empty[0], non_empty[1], non_empty[2]
+
+    if len(parts) >= 2:
+        a, b = parts[0], parts[1]
+        if has_diacritics(b) or ("FIRMA" in b and ("COMPANHIA" in b or "LDA" in b or "LIMITADA" in b)):
+            return a, b, ""
         else:
-            zh, en = after, before
-        return zh, '', en
-
-    # 有 ||BRK|| 的情况：直接二分，保留所有引號原文
-    # 根據各段本身的語言來判斷，而非根據 searched_name
-    if is_chinese(name_a) and not is_chinese(name_b):
-        # name_a = 中文, name_b = 英文 → 正確順序
-        zh, en = name_a, name_b
-    elif not is_chinese(name_a) and is_chinese(name_b):
-        # name_a = 英文, name_b = 中文 → 交換
-        zh, en = name_b, name_a
-    else:
-        # 同為中文或同為英文：根據 searched_name 判斷
-        if is_chinese(searched_name):
-            zh = name_b if is_chinese(name_b) else name_a
-            en = name_a if not is_chinese(name_a) else name_b
-        else:
-            en = name_a if not is_chinese(name_a) else name_b
-            zh = name_b if is_chinese(name_b) else ''
-    return zh, '', en
-
-
-def parse_active_ingredients(td_element):
-    """
-    解析活性成份欄位。
-    結構（lxml 直接子節點）：文字 → zh，<br> → 分隔，雙 <br> = 新成份
-    遍歷 <td> 的直接子節點：文字節點交替為 [zh1, en1, zh2, en2, ...]
-    返回 (zh_list, pt_list, en_list)
-    """
-    zh_list, en_list = [], []
-    br_count = 0
-    for child in td_element.children:
-        t = type(child).__name__
-        if t == 'Tag' and child.name == 'br':
-            br_count += 1
-            continue
-        if t == 'NavigableString' and child.strip():
-            text = child.strip()
-            br = br_count
-            br_count = 0
-            if br == 0:
-                # 無 br 在前：成份中文名
-                zh_list.append(text)
-            elif br == 1:
-                # 1 個 br 在前：，成份英文名
-                en_list.append(text)
-            elif br >= 2:
-                # 2+ 個 br 在前：新成份中文名
-                zh_list.append(text)
-
-    # 補足（如果 zh 比 en 多，最後一個 zh 沒有對應英文）
-    if len(zh_list) > len(en_list):
-        en_list.append('')
-
-    return zh_list, [''] * len(zh_list), en_list
-
-
-def parse_mfg_dist(td_element):
-    """解析製造商 / 供應商欄位，返回 (code, zh, en)"""
-    text = td_text(td_element)
-    parts = [p.strip() for p in text.split('||BRK||') if p.strip()]
-
-    code, zh, en = '', '', ''
-    if not parts:
-        return code, zh, en
-
-    # 提取 code（格式：XX0000）
-    code_match = re.match(r'^([A-Z]{2}\d{4})\s*(.*)', parts[0])
-    if code_match:
-        code = code_match.group(1)
-        zh = code_match.group(2).strip() or parts[0]
-    else:
-        zh = parts[0]
-
-    en = parts[1] if len(parts) > 1 else ''
-    return code, zh, en
+            return a, "", b
+    if len(parts) == 1:
+        return parts[0], "", ""
+    return "", "", ""
 
 
 # ─────────────────────────────────────────
@@ -226,8 +151,7 @@ def parse_detail(html, searched_name):
     if not table:
         return None
 
-    data = {f: '' for f in FIELDS}
-    data['searched_name'] = searched_name
+    data = {f: "" for f in FIELDS}
 
     for row in table.find_all("tr"):
         cells = row.find_all("td")
@@ -238,69 +162,115 @@ def parse_detail(html, searched_name):
         value_td = cells[1]
 
         # 從 label 提取識別關鍵字
-        label_text = re.sub(r'<[^>]+>', ' ', str(label_td))
-        label_text = re.sub(r'\s+', ' ', label_text).strip().lower()
+        label_text = re.sub(r"<[^>]+>", " ", str(label_td))
+        label_text = re.sub(r"\s+", " ", label_text).strip().lower()
 
         # ── 商品名稱 ──
-        if any(k in label_text for k in ['商品名稱', 'nome comercial', 'commercial name']):
-            zh, pt, en = parse_product_name(value_td, searched_name)
-            data['product_name_zh'] = zh
-            data['product_name_pt'] = pt
-            data['product_name_en'] = en
+        if any(k in label_text for k in ["商品名稱", "nome comercial", "commercial name"]):
+            zh, pt, en = parse_product_name(td_text(value_td), searched_name)
+            data["product_name_zh"] = zh
+            data["product_name_pt"] = pt
+            data["product_name_en"] = en
 
         # ── 劑型 ──
-        elif any(k in label_text for k in ['劑型', 'forma farmac', 'pharmaceutical form']):
-            zh, pt, en = parse_trilingual(td_text(value_td))
-            data['pharmaceutical_form_zh'] = zh
-            data['pharmaceutical_form_pt'] = pt
-            data['pharmaceutical_form_en'] = en
+        elif any(k in label_text for k in ["劑型", "forma farmac", "pharmaceutical form"]):
+            zh, pt, en = split_trilingual(td_text(value_td))
+            data["pharmaceutical_form_zh"] = zh
+            data["pharmaceutical_form_pt"] = pt
+            data["pharmaceutical_form_en"] = en
 
         # ── 投藥途徑 ──
-        elif any(k in label_text for k in ['投藥途徑', 'via de adminin', 'route of administration']):
-            zh, pt, en = parse_trilingual(td_text(value_td))
-            data['route_of_administration_zh'] = zh
-            data['route_of_administration_pt'] = pt
-            data['route_of_administration_en'] = en
+        elif any(k in label_text for k in ["投藥途徑", "via de adminin", "route of administration"]):
+            zh, pt, en = split_trilingual(td_text(value_td))
+            data["route_of_administration_zh"] = zh
+            data["route_of_administration_pt"] = pt
+            data["route_of_administration_en"] = en
 
-        # ── 活性成分 ──
-        elif any(k in label_text for k in ['活性成分', 'princ', 'active ingredient']):
-            zh_list, pt_list, en_list = parse_active_ingredients(value_td)
-            data['active_ingredients_zh'] = '|||'.join(zh_list)
-            data['active_ingredients_pt'] = '|||'.join(pt_list)
-            data['active_ingredients_en'] = '|||'.join(en_list)
+        # ── 活性成份 ──
+        elif any(k in label_text for k in ["活性成分", "princ", "active ingredient"]):
+            zh_list, pt_list, en_list = parse_active_ingredients(td_text(value_td))
+            data["active_ingredients_zh"] = "|||".join(zh_list)
+            data["active_ingredients_pt"] = "|||".join(pt_list)
+            data["active_ingredients_en"] = "|||".join(en_list)
 
-        # ── ATC 分類（需在法定分類之前判斷，因關鍵字有重疊）──
-        elif any(k in label_text for k in ['atc', 'anatomical therapeutic', 'classificação fármaco']):
-            zh, pt, en = parse_trilingual(td_text(value_td))
-            code_match = re.match(r'^([A-Z]\d{2}[A-Z]?\s*\d*)', zh)
-            data['atc_code'] = code_match.group(1).strip() if code_match else ''
-            data['atc_classification_zh'] = zh
-            data['atc_classification_pt'] = pt
-            data['atc_classification_en'] = en
+        # ── ATC 分類（需在法定分類之前判斷）──
+        elif any(k in label_text for k in ["atc", "anatomical therapeutic", "classificação fármaco"]):
+            text_val = td_text(value_td)
+            # ATC code 是第一段開頭的字母+數字
+            parts = text_val.split("||BRK||")
+            first = parts[0].strip() if parts else ""
+            code_match = re.match(r"^([A-Z]\d{2}[A-Z]?\s*\d*)", first)
+            atc_code = code_match.group(1).strip() if code_match else ""
+            zh, pt, en = split_trilingual(text_val)
+            data["atc_code"] = atc_code
+            data["atc_classification_zh"] = zh
+            data["atc_classification_pt"] = pt
+            data["atc_classification_en"] = en
 
         # ── 法定分類 ──
-        elif any(k in label_text for k in ['法定分類', 'classifica', 'forensic classification']):
-            if not any(k in label_text for k in ['atc', 'who', 'oms', 'terap']):
-                zh, pt, en = parse_trilingual(td_text(value_td))
-                data['legal_classification_zh'] = zh
-                data['legal_classification_pt'] = pt
-                data['legal_classification_en'] = en
+        elif any(k in label_text for k in ["法定分類", "classifica", "forensic classification"]):
+            if not any(k in label_text for k in ["atc", "who", "oms", "terap"]):
+                zh, pt, en = split_trilingual(td_text(value_td))
+                data["legal_classification_zh"] = zh
+                data["legal_classification_pt"] = pt
+                data["legal_classification_en"] = en
 
         # ── 製造商 ──
-        elif any(k in label_text for k in ['製造商', 'fabricante', 'manufacturer']):
-            code, zh, en = parse_mfg_dist(value_td)
-            data['manufacturer_code'] = code
-            data['manufacturer_zh'] = zh
-            data['manufacturer_en'] = en
+        elif any(k in label_text for k in ["製造商", "fabricante", "manufacturer"]):
+            zh, pt, en = parse_manufacturer_distributor(td_text(value_td))
+            data["manufacturer_zh"] = zh
+            data["manufacturer_pt"] = pt
+            data["manufacturer_en"] = en
 
         # ── 供應商 ──
-        elif any(k in label_text for k in ['供應商', 'distribuidor', 'distributer']):
-            code, zh, en = parse_mfg_dist(value_td)
-            data['distributor_code'] = code
-            data['distributor_zh'] = zh
-            data['distributor_en'] = en
+        elif any(k in label_text for k in ["供應商", "distribuidor", "distributer"]):
+            zh, pt, en = parse_manufacturer_distributor(td_text(value_td))
+            data["distributor_zh"] = zh
+            data["distributor_pt"] = pt
+            data["distributor_en"] = en
 
     return data
+
+
+def parse_product_name(text, searched_name):
+    """
+    解析商品名稱。
+    HTML 中無 <br>，文字全部串聯，以 rfind(searched_name) 定位分界。
+    """
+    if "||BRK||" in text:
+        # 有真實 <br> 分隔（理論上不存在，保守處理）
+        zh, pt, en = split_trilingual(text)
+        return zh, pt, en
+
+    # 無 <br>：文字全部串聯
+    pos = text.rfind(searched_name)
+    if pos < 0:
+        # Fallback: 去除 " 後匹配
+        en_clean = searched_name.replace('"', "")
+        text_nq = text.replace('"', "")
+        pos_in_nq = text_nq.rfind(en_clean)
+        if pos_in_nq < 0:
+            return text.strip(), "", ""
+        quotes_before = sum(1 for ch in text[:pos_in_nq] if ch == '"')
+        pos = pos_in_nq + quotes_before
+
+    before = text[:pos]
+    after = text[pos + len(searched_name):]
+
+    def zh_count(s):
+        return len(re.findall(r"[\u4e00-\u9fff]", s))
+
+    # 特殊情況：searched_name 含中文且在 text 開頭
+    has_zh = bool(re.search(r"[\u4e00-\u9fff]", searched_name))
+    if pos == 0 and has_zh:
+        return searched_name.strip(), "", after.strip()
+
+    zh_c = zh_count(before)
+    en_c = zh_count(after)
+    if zh_c >= en_c:
+        return before.strip(), "", after.strip()
+    else:
+        return after.strip(), "", before.strip()
 
 
 # ─────────────────────────────────────────
@@ -308,6 +278,7 @@ def parse_detail(html, searched_name):
 # ─────────────────────────────────────────
 
 _session = None
+
 
 def get_session():
     global _session
@@ -318,7 +289,7 @@ def get_session():
 
 
 def search_all():
-    """取得所有藥品記錄 ID 及搜尋列表頁顯示的原始名稱"""
+    """取得所有藥品記錄 ID"""
     print("正在取得全部藥品 ID 及名稱...")
     s = get_session()
     resp = s.post(SEARCH_URL, data={
@@ -327,7 +298,7 @@ def search_all():
     }, timeout=30)
     resp.raise_for_status()
 
-    soup = BeautifulSoup(resp.text, 'html.parser')
+    soup = BeautifulSoup(resp.text, "html.parser")
     select = soup.find("select")
     records = []
 
@@ -350,7 +321,7 @@ def search_all():
 
 
 def fetch_detail(rid, searched_name):
-    """每次使用新的乾净 session，避免狀態污染"""
+    """每次使用新的乾净 session"""
     s = requests.Session()
     s.headers.update(HEADERS)
     try:
@@ -360,16 +331,6 @@ def fetch_detail(rid, searched_name):
     except Exception as e:
         print(f"  [!] ID {rid} 失敗: {e}")
         return None
-
-
-# ─────────────────────────────────────────
-# 清理
-# ─────────────────────────────────────────
-
-def clean(t):
-    if not t:
-        return ""
-    return re.sub(r'[\r\n\t]+', ' ', str(t)).strip()
 
 
 # ─────────────────────────────────────────
@@ -404,16 +365,12 @@ def run(limit=None):
 
         row = fetch_detail(rid, searched_name)
         if row:
-            row["record_id"] = rid
-            for f in FIELDS:
-                if f not in ('record_id', 'searched_name'):
-                    row[f] = clean(row.get(f, ""))
+            row["mednbr"] = rid
             results.append(row)
         else:
             errors += 1
             r = {f: "" for f in FIELDS}
-            r["record_id"] = rid
-            r["searched_name"] = searched_name
+            r["mednbr"] = rid
             results.append(r)
 
         if i % 20 == 0 and i > 0:
