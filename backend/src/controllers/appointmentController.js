@@ -122,11 +122,15 @@ const createAppointment = async (req, res) => {
       return res.status(400).json({ error: '病人不存在' });
     }
 
+    // Normalize type: convert 'follow-up' to 'followup' to match DB enum
+    let normalizedType = type || 'first';
+    if (normalizedType === 'follow-up') normalizedType = 'followup';
+
     const id = generateId();
     await pool.execute(
       `INSERT INTO appointments (id, patient_id, doctor_id, date, time, type, status, notes)
        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
-      [id, patient_id, doctor_id || null, date, time || null, type || 'first', notes || null]
+      [id, patient_id, doctor_id || null, date, time || null, normalizedType, notes || null]
     );
 
     await logAudit(req.user.id, 'CREATE', 'appointments', { appointmentId: id, patient_id, date }, req.ip);
@@ -251,7 +255,7 @@ const completeAppointment = async (req, res) => {
     await pool.execute(
       `UPDATE appointments SET status = ?, consultation_type = ?, consultation_notes = ?, updated_at = NOW()
        WHERE id = ?`,
-      ['completed', consultation_type || 'consultation', consultation_notes, id]
+      ['completed', consultation_type || 'consultation', consultation_notes || null, id]
     );
 
     await logAudit(req.user.id, 'COMPLETE', 'appointments', { appointmentId: id }, req.ip);

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>澳門藥物資料測試樣本</title>
+<style>
+  body { font-family: "Noto Sans CJK TC", "Microsoft JhengHei", Arial, sans-serif; font-size: 13px; color: #222; background: #f9f9f9; }
+  .container { max-width: 900px; margin: 30px auto; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+  .header { background: linear-gradient(135deg, #1a4a6e, #2980b9); color: white; padding: 24px 30px; }
+  .header h1 { margin: 0 0 6px; font-size: 20px; }
+  .header p { margin: 0; opacity: 0.85; font-size: 12px; }
+  .summary { background: #eaf4fb; padding: 16px 30px; border-bottom: 1px solid #d0e8f5; }
+  .summary .stat { display: inline-block; margin-right: 30px; }
+  .summary .label { color: #666; font-size: 11px; }
+  .summary .value { font-size: 18px; font-weight: bold; color: #1a4a6e; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: #1a4a6e; color: white; }
+  thead th { padding: 10px 8px; font-size: 11px; text-align: left; font-weight: 600; }
+  tbody tr { border-bottom: 1px solid #eee; }
+  tbody tr:nth-child(even) { background: #f8fcff; }
+  tbody td { padding: 10px 8px; font-size: 12px; vertical-align: top; }
+  td.n { color: #999; font-size: 11px; width: 30px; text-align: right; padding-right: 10px; }
+  td.zh { color: #1a3a5c; font-weight: 500; }
+  td.en { color: #555; }
+  td.dim { color: #aaa; font-size: 11px; }
+  .footer { padding: 16px 30px; font-size: 11px; color: #aaa; text-align: center; border-top: 1px solid #eee; }
+  .ok { color: #27ae60; } .warn { color: #e67e22; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+  <h1>🇲🇴 澳門藥物監督管理局 — 藥品資料庫</h1>
+  <p>ISAF Macau Medicine Database · 測試樣本（共 20 筆記錄）</p>
+</div>
+<div class="summary">
+  <div class="stat"><div class="label">總記錄</div><div class="value">20</div></div>
+  <div class="stat"><div class="label">有中文名</div><div class="value ok">20</div></div>
+  <div class="stat"><div class="label">有英文名</div><div class="value">9</div></div>
+  <div class="stat"><div class="label">有 ATC</div><div class="value">20</div></div>
+  <div class="stat"><div class="label">完整度</div><div class="value">19/20</div></div>
+</div>
+<table>
+<thead>
+<tr>
+  <th>#</th>
+  <th>ID</th>
+  <th>商品名稱（中文）</th>
+  <th>商品名稱（英文）</th>
+  <th>劑型</th>
+  <th>活性成份</th>
+  <th>ATC</th>
+  <th>製造商</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="n">1</td>
+  <td class="dim">132118</td>
+  <td class="zh">"歐業"賜爾鼻好膠囊</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>膠囊</td>
+  <td class="en">甘草酸|||顛茄提取物|||偽麻黃鹼|||馬來酸氯苯那敏</td>
+  <td class="dim">R01B R01B  全身用抗鼻充血藥</td>
+  <td class="dim">皇佳化學製藥股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">2</td>
+  <td class="dim">139892</td>
+  <td class="zh">波哌達可基注射液</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>注射劑</td>
+  <td class="en">波哌達可基</td>
+  <td class="dim">B02B B02B  維生素K與其他止血藥</td>
+  <td class="dim">上海勉亦生物科技有限公司</td>
+</tr>
+<tr>
+  <td class="n">3</td>
+  <td class="dim">138828</td>
+  <td class="zh">"麥迪森"亞妥明眼藥水0.025%</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>溶液</td>
+  <td class="en">硫酸阿托品</td>
+  <td class="dim">S01F S01F  擴瞳藥及睫狀肌麻痹藥</td>
+  <td class="dim">麥迪森醫藥股份有限公司桃園廠</td>
+</tr>
+<tr>
+  <td class="n">4</td>
+  <td class="dim">131653</td>
+  <td class="zh">"JAMIESON" 維他命C 500 毫克長效時釋片</td>
+  <td class="en">VITAMIN C 500MG TIMED RELEASE CAPLET "JAMIESON"</td>
+  <td>緩釋片</td>
+  <td class="en">維生素C(抗壞血酸)</td>
+  <td class="dim">A11G A11G  抗壞血酸(維生素C), 包括複方製劑</td>
+  <td class="dim"><span class="dim">—</span></td>
+</tr>
+<tr>
+  <td class="n">5</td>
+  <td class="dim">138406</td>
+  <td class="zh">黴癒灰指甲油劑5%</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>液體</td>
+  <td class="en">阿莫羅芬</td>
+  <td class="dim">D01A D01A  局部用抗真菌藥</td>
+  <td class="dim">中國化學製藥股份有限公司新豐工廠</td>
+</tr>
+<tr>
+  <td class="n">6</td>
+  <td class="dim">133467</td>
+  <td class="zh">"OKK"痛風靈300毫克</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>片劑</td>
+  <td class="en">別嘌醇</td>
+  <td class="dim">M04A M04A  抗痛風製劑</td>
+  <td class="dim">皇佳化學製藥股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">7</td>
+  <td class="dim">137226</td>
+  <td class="zh">"瑞安"黴好噴劑10毫克/公克</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>噴霧劑</td>
+  <td class="en">鹽酸特比萘芬</td>
+  <td class="dim">D01A D01A  局部用抗真菌藥</td>
+  <td class="dim">健康化學製藥股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">8</td>
+  <td class="dim">138135</td>
+  <td class="zh">"瑞安"普樂C錠500毫克</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>片劑</td>
+  <td class="en">維生素C(抗壞血酸)|||抗壞血酸鈉</td>
+  <td class="dim">A11G A11G  抗壞血酸(維生素C), 包括複方製劑</td>
+  <td class="dim">優良化學製藥股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">9</td>
+  <td class="dim">139658</td>
+  <td class="zh">腹釋寧便通錠</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>片劑</td>
+  <td class="en">氧化鎂</td>
+  <td class="dim">A02A A02A  抗酸藥</td>
+  <td class="dim">優良化學製藥股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">10</td>
+  <td class="dim">135184</td>
+  <td class="zh">"五福"樂托品點眼液0.01%</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>溶液</td>
+  <td class="en">阿托品</td>
+  <td class="dim">S01F S01F  擴瞳藥及睫狀肌麻痹藥</td>
+  <td class="dim">五福化學製藥股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">11</td>
+  <td class="dim">137938</td>
+  <td class="zh">五福樂托品點眼液單支裝0.01%</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>溶液</td>
+  <td class="en">硫酸阿托品</td>
+  <td class="dim">S01F S01F  擴瞳藥及睫狀肌麻痹藥</td>
+  <td class="dim">五福化學製藥股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">12</td>
+  <td class="dim">136733</td>
+  <td class="zh">"五福"樂托品點眼液0.05%</td>
+  <td class="en"><span class="dim">—</span></td>
+  <td>溶液</td>
+  <td class="en">阿托品</td>
+  <td class="dim">S01F S01F  擴瞳藥及睫狀肌麻痹藥</td>
+  <td class="dim">五福化學製藥股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">13</td>
+  <td class="dim">136238</td>
+  <td class="zh">"人人"燙火膏1%</td>
+  <td class="en">SILVA-SULFA CREAM 1%  "GCPC"</td>
+  <td>乳膏</td>
+  <td class="en">磺胺嘧啶銀</td>
+  <td class="dim">D06B D06B  局部用化療藥</td>
+  <td class="dim">人人化學製藥股份有限公司中壢廠</td>
+</tr>
+<tr>
+  <td class="n">14</td>
+  <td class="dim">135910</td>
+  <td class="zh">"人人"鹽酸四環素眼藥膏</td>
+  <td class="en">TETRACYCLINE HCL OPHTHALMIC OINTMENT 10MG/G "GCPC"</td>
+  <td>軟膏</td>
+  <td class="en">四環素</td>
+  <td class="dim">D06A D06A  局部用抗生素</td>
+  <td class="dim">人人化學製藥股份有限公司中壢廠</td>
+</tr>
+<tr>
+  <td class="n">15</td>
+  <td class="dim">123954</td>
+  <td class="zh">"十全" 潔之黴噴劑</td>
+  <td class="en">JYE MEI SPRAY "S.C." 10MG/G</td>
+  <td>噴霧劑</td>
+  <td class="en">鹽酸特比萘芬</td>
+  <td class="dim">D01A D01A  局部用抗真菌藥</td>
+  <td class="dim">十全實業股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">16</td>
+  <td class="dim">122198</td>
+  <td class="zh">"十全"使排通錠</td>
+  <td class="en">SPIRONOLACTONE TABLETS 25MG "S.C."</td>
+  <td>片劑</td>
+  <td class="en">螺內酯</td>
+  <td class="dim">C03D C03D  保鉀藥</td>
+  <td class="dim">十全實業股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">17</td>
+  <td class="dim">120018</td>
+  <td class="zh">"十全"盼胃優</td>
+  <td class="en">POZOLA ENTERIC FC TAB 40MG "S.C"</td>
+  <td>腸溶片</td>
+  <td class="en">泮托拉唑</td>
+  <td class="dim">A02B A02B  消化性潰瘍和胃腸道回流疾病用藥</td>
+  <td class="dim">十全實業股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">18</td>
+  <td class="dim">122946</td>
+  <td class="zh">"十全"得克芬錠</td>
+  <td class="en">DICLOFENAC SODIUM TABLETS 25MG "S.C."</td>
+  <td>片劑</td>
+  <td class="en">雙氯芬酸</td>
+  <td class="dim">M01A M01A  非甾體抗炎和抗風濕藥</td>
+  <td class="dim">十全實業股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">19</td>
+  <td class="dim">138893</td>
+  <td class="zh">"十全"通息錠</td>
+  <td class="en">TALLSEA TABLETS "S.C."</td>
+  <td>片劑</td>
+  <td class="en">美芬噁酮|||撲熱息痛(對乙酰氨基酚)</td>
+  <td class="dim">N05B N05B  抗焦慮藥</td>
+  <td class="dim">十全實業股份有限公司</td>
+</tr>
+<tr>
+  <td class="n">20</td>
+  <td class="dim">122117</td>
+  <td class="zh">"十全"愛彼脈</td>
+  <td class="en">IBIMO C.R.F.C. TABLETS 60MG ''S.C.''</td>
+  <td>緩釋片</td>
+  <td class="en">單硝酸異山梨酯</td>
+  <td class="dim">C01D C01D  治療心臟病用血管舒張藥</td>
+  <td class="dim">十全實業股份有限公司</td>
+</tr>
+</tbody>
+</table>
+<div class="footer">
+  澳門藥物監督管理局 ISAF · 測試樣本 · 匯出時間：2026-04-13 09:05 · 完整數據待Eric確認後執行
+</div>
+</div>
+</body>
+</html>

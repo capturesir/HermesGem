@@ -104,13 +104,24 @@ const createPatient = async (req, res) => {
 
     const id = generateId();
 
+    const created_by = req.user.id;
+    const created_by_name = req.user.name;
+
+    const params = [
+      id, patient_number, name,
+      gender ?? null, birth_date ?? null, id_card ?? null,
+      phone ?? null, email ?? null, address ?? null,
+      emergency_contact ?? null, emergency_phone ?? null,
+      insurance_type ?? null, insurance_number ?? null,
+      created_by, created_by_name
+    ];
+
     await pool.execute(
       `INSERT INTO patients (id, patient_number, name, gender, birth_date, id_card, phone, email,
-       address, emergency_contact, emergency_phone, insurance_type, insurance_number)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, patient_number, name, gender || null, birth_date || null, id_card || null,
-       phone || null, email || null, address || null, emergency_contact || null,
-       emergency_phone || null, insurance_type || null, insurance_number || null]
+       address, emergency_contact, emergency_phone, insurance_type, insurance_number,
+       created_by, created_by_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      params
     );
 
     // Log audit

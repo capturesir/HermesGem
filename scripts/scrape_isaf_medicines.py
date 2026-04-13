@@ -146,7 +146,7 @@ def parse_manufacturer_distributor(text):
 # 詳情頁解析
 # ─────────────────────────────────────────
 
-def parse_detail(html, searched_name):
+def parse_detail(html, option_texts):
     """解析詳細頁 HTML"""
     soup = BeautifulSoup(html, PARSER)
     table = soup.find("table")
@@ -169,7 +169,7 @@ def parse_detail(html, searched_name):
 
         # ── 商品名稱 ──
         if any(k in label_text for k in ["商品名稱", "nome comercial", "commercial name"]):
-            zh, pt, en = parse_product_name(td_text(value_td), searched_name)
+            zh, pt, en = parse_product_name(option_texts)
             data["product_name_zh"] = zh
             data["product_name_pt"] = pt
             data["product_name_en"] = en
@@ -230,6 +230,10 @@ def parse_detail(html, searched_name):
             data["distributor_zh"] = zh
             data["distributor_pt"] = pt
             data["distributor_en"] = en
+            # 從中文名稱開頭提取公司編號（如 "FI0220"）
+            code_match = re.match(r"^([A-Z]{2}\d+)\s+", zh)
+            if code_match:
+                data["distributor_code"] = code_match.group(1)
             # 從供應商中文名稱開頭提取公司編號（如 FI0220）
             code_match = re.match(r"^([A-Z]{2}\d{4})", zh)
             data["distributor_code"] = code_match.group(1) if code_match else ""
@@ -319,14 +323,14 @@ def search_all():
     return unique
 
 
-def fetch_detail(rid, searched_name):
+def fetch_detail(rid, option_texts):
     """每次使用新的乾净 session"""
     s = requests.Session()
     s.headers.update(HEADERS)
     try:
         resp = s.post(DETAIL_URL, data={"mednbr": rid}, timeout=30)
         resp.raise_for_status()
-        return parse_detail(resp.text, searched_name)
+        return parse_detail(resp.text, option_texts)
     except Exception as e:
         print(f"  [!] ID {rid} 失敗: {e}")
         return None
@@ -362,7 +366,8 @@ def run(limit=None):
             print(f"  進度: {i}/{total} ({i*100/total:.1f}%) | "
                   f"速率: {rate:.1f}/s | 剩餘: {eta:.0f}分 | 錯誤: {errors}")
 
-        row = fetch_detail(rid, searched_name)
+        option_texts = get_option_texts(rid)
+        row = fetch_detail(rid, option_texts)
         if row:
             row["mednbr"] = rid
             results.append(row)
