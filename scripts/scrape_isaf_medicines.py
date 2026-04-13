@@ -88,27 +88,29 @@ def split_trilingual(text):
 def parse_active_ingredients(text):
     """
     解析活性成份。
-    結構（get_text 結果）：name_zh ||BRK|| name_en ||BRK|| name_zh ||BRK|| name_en ...
-    - 每兩個相鄰段 = 一個成份（奇數位置=zh，偶數位置=en）
-    - 總段數為奇數時，最後一個 zh 無對應 en
+    結構（td_text 結果）：
+      - 單成份：zh ||BRK|| en
+      - 多成份：zh1 ||BRK|| en1 ||BRK|| ||BRK|| zh2 ||BRK|| en2 ||BRK|| ||BRK|| ...
+    - 連續兩個 ||BRK|| 產生空字串 '' 作為成份分界
+    - 每個成份內：中 / 英（中間段為空，即無葡文）
+    - 演算法：split → 去除空字串 → 每兩個相鄰段為一組（zh, en）
     """
-    zh_list, pt_list, en_list = [], [], []
+    zh_list, en_list = [], []
 
-    # 以雙 ||BRK|| 分割不同成份（每一個成份以 ||BRK|| 分隔中/英）
-    # "||BRK||".split("||BRK||") → ["", ""]，中間空字串代表一個成份的空英/en
-    parts = text.split("||BRK||")
-    i = 0
-    while i < len(parts):
-        zh = parts[i].strip()
-        en = parts[i + 1].strip() if i + 1 < len(parts) else ""
-        i += 2
+    parts = text.split("||BRK||")  # [zh, en, '', zh, en, '', ...]
+    # 去除空字串，再每兩個相鄰非空段 = 一個成份
+    non_empty = [p.strip() for p in parts if p.strip()]
+
+    for i in range(0, len(non_empty), 2):
+        zh = non_empty[i]
+        en = non_empty[i + 1].strip() if i + 1 < len(non_empty) else ""
         if zh or en:
             zh_list.append(zh)
             en_list.append(en)
-            # PT 永為空（無葡文），不追加 entry
-            # PT 欄：全為空則留空白，否則以 ||| 連接
-            pt_all = "|||".join([p for p in pt_list if p]) if pt_list else ""
-            return zh_list, pt_all, en_list
+
+    # PT 欄：始終留空（無葡文成份資料）
+    pt_all = ""
+    return zh_list, pt_all, en_list
 
 
 def has_diacritics(s):
