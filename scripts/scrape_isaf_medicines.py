@@ -3,9 +3,9 @@
 澳門藥物監督管理局 (ISAF) 藥品資料爬蟲 v5
 目標: 抓取全部藥品詳細資料（9,118 筆），輸出為 CSV + PDF
 
-25 欄位設計：
+27 欄位設計：
   mednbr（藥物編號）
-  + 8 類別 × 3 語言（中、葡、英）= 25 欄
+  + 8 類別 × 3 語言（中、葡、英）+ atc_code + distributor_code = 27 欄
 
 HTML 結構說明：
   - 各 td 以 <br> 分隔三語
@@ -45,7 +45,7 @@ HEADERS = {
 CSV_FILE = "/home/gem-openclaw/project/simple-medical-system/data/isaf_medicines.csv"
 PARSER = "lxml"
 
-# 25 欄位（中、葡、英各自獨立欄）
+# 27 欄位（中、葡、英各自獨立欄）
 FIELDS = [
     "mednbr",
     # 商品名稱
