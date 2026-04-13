@@ -216,11 +216,17 @@ def parse_detail(html, option_texts):
                 data["product_name_en"] = en_option
                 data["product_name_zh"] = full_name[len(en_option):].strip()
             else:
-                # 兩者都不在開頭 → fallback：用長度估算
-                zh, pt, en = parse_product_name(full_name, en_option or zh_option or "")
-                data["product_name_zh"] = zh
-                data["product_name_pt"] = pt
-                data["product_name_en"] = en
+                # 兩者都不在開頭
+                if zh_option is None:
+                    # 無中文 option → 全部是英文
+                    data["product_name_zh"] = ""
+                    data["product_name_en"] = en_option or full_name.strip()
+                else:
+                    # 中文不在開頭 → fallback：用長度估算
+                    zh, pt, en = parse_product_name(full_name, zh_option)
+                    data["product_name_zh"] = zh
+                    data["product_name_pt"] = pt
+                    data["product_name_en"] = en
 
         # ── 劑型 ──
         elif any(k in label_text for k in ["劑型", "forma farmac", "pharmaceutical form"]):
