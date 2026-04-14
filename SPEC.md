@@ -24,9 +24,21 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-14 06:08 (Asia/Macau)
-**Git HEAD**: `7a5bf70` — chore: 完整爬蟲v2（9107筆成功率99.9%，修正商品名稱解析邏輯）
-**注意**: HEAD 已推進（較上次落後），需確認是否需要 revert 或維護 EMR 代碼分支
+**上次檢查**: 2026-04-14 18:08 (Asia/Macau)
+**Git HEAD`: `10cc147` — feat: 爬蟲完成後自動生成多層結構JSON及PDF預覽
+**DB 狀態**: 19 patients, 13 appointments, 15 users
+**後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
+
+---
+
+## 開發進度檢查記錄 (Dev Check Log)
+
+### 2026-04-14 18:08 (本次)
+- Test a) doctor1 登入 → 新增病人 ✅ → 新增預約 ✅ (需用 `type:first` 而非 `type:new`；backend log 可見 `Data truncated for column 'type'` 初試失敗)
+- Test b) admin 登入 → #Rate Limited (短時間大量登入測試，5分鐘冷卻)
+- Test c) 預約狀態更新 → Skipped (受 rate limit 影響)
+- Test d) 刪除病人 → Skipped (受 rate limit 影響)
+- **New Issue Found**: K09 - 預約 API `type` 欄位 enum 為 `first/followup/urgent`，但錯誤訊息寫「病人編號和診症日期為必填項」，誤導性高（實際問題是 type 無效）
 
 ---
 
@@ -42,6 +54,7 @@ AIGC:
 | P1 | K06 | 前端審核 | 刪改操作未完整記錄操作人員身份 | 中優先 |
 | P1 | K07 | 前端效能 | 全部模組一口氣請求，影響首頁載入速度 | 中優先 |
 | P2 | K08 | 身份驗證 | 只支援帳號密碼登入，無雙重驗證（2FA）| 低優先 |
+| P1 | K09 | 預約 API | 錯誤訊息誤導：「病人編號和診症日期為必填項」但實際是 `type` 欄位 enum 不接受 `new/follow-up`，後端 log 可見 `Data truncated for column 'type'`；前端傳 `type:new` 或 `type:follow-up` 均失敗，需用 `first/followup/urgent` | 中優先 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
