@@ -296,8 +296,8 @@ const AppointmentForm: React.FC = () => {
             </label>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { value: 'followup', label: '複診', desc: '定期回診（多數情況）' },
                 { value: 'first', label: '初診', desc: '首次就診' },
+                { value: 'followup', label: '複診', desc: '定期回診' },
                 { value: 'urgent', label: '緊急', desc: '急需就診' },
               ].map(type => (
                 <label
