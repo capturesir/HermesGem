@@ -18,13 +18,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   body {{ font-family: "Noto Sans CJK TC", "DejaVu Sans", Arial, sans-serif; font-size: 9pt; color: #222; }}
   h1 {{ color: #1a4a6e; border-bottom: 2px solid #1a4a6e; padding-bottom: 6px; font-size: 16pt; }}
   .meta {{ color: #666; font-size: 8pt; margin-bottom: 20px; }}
-  table {{ border-collapse: collapse; width: 100%; page-break-inside: auto; }}
+  table {{ border-collapse: collapse; width: 100%; table-layout: fixed; page-break-inside: auto; }}
   thead {{ background: #1a4a6e; color: white; }}
-  thead th {{ padding: 6px 4px; font-size: 8pt; text-align: left; font-weight: bold; }}
+  thead th {{
+    padding: 6px 4px; font-size: 8pt; text-align: left; font-weight: bold;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }}
   tbody tr {{ border-bottom: 1px solid #ddd; }}
   tbody tr:nth-child(even) {{ background: #f5f9fc; }}
-  tbody td {{ padding: 4px 5px; font-size: 8pt; vertical-align: top; }}
-  td.no {{ color: #888; font-size: 7pt; text-align: right; padding-right: 8px; }}
+  tbody td {{ padding: 4px 5px; font-size: 8pt; vertical-align: top; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+  td.no {{ color: #888; font-size: 7pt; text-align: right; padding-right: 8px; width: 25px; }}
+  /* 欄寬設定 */
+  th.col-no, td.col-no {{ width: 25px; }}           /* 序號 */
+  th.col-id, td.col-id {{ width: 55px; }}          /* ID */
+  th.col-name-zh, td.col-name-zh {{ width: 140px; }}  /* 中文名 */
+  th.col-name-en, td.col-name-en {{ width: 160px; }}  /* 英文名 */
+  th.col-form, td.col-form {{ width: 60px; }}      /* 劑型 */
+  th.col-route, td.col-route {{ width: 55px; }}    /* 投藥途徑 */
+  th.col-ai-zh, td.col-ai-zh {{ width: 160px; }}   /* 活性成份中文 */
+  th.col-ai-en, td.col-ai-en {{ width: 180px; }}   /* 活性成份英文 */
+  th.col-legal, td.col-legal {{ width: 75px; }}     /* 法定分類 */
+  th.col-atc, td.col-atc {{ width: 150px; }}        /* ATC分類 */
+  th.col-mfr, td.col-mfr {{ width: 120px; }}       /* 製造商 */
+  th.col-dist, td.col-dist {{ width: 130px; }}      /* 供應商 */
   .footer {{ margin-top: 20px; font-size: 7pt; color: #aaa; text-align: center; }}
   @page {{ size: A4 landscape; margin: 15mm 12mm; }}
 </style>
@@ -45,24 +61,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>"""
 
 COLUMNS = [
-    ("record_id", "ID"),
-    ("searched_name", "搜尋名"),
+    ("mednbr", "ID"),
     ("product_name_zh", "商品名（中文）"),
     ("product_name_en", "商品名（英文）"),
-    ("pharmaceutical_form_zh", "劑型（中文）"),
-    ("pharmaceutical_form_en", "劑型（英文）"),
-    ("route_of_administration_zh", "投藥途徑（中文）"),
+    ("pharmaceutical_form_en", "劑型"),
+    ("route_of_administration_zh", "投藥途徑"),
     ("active_ingredients_zh", "活性成份（中文）"),
     ("active_ingredients_en", "活性成份（英文）"),
-    ("legal_classification_zh", "法定分類（中文）"),
-    ("atc_code", "ATC 編碼"),
-    ("atc_classification_zh", "ATC 分類（中文）"),
-    ("manufacturer_code", "製造商代碼"),
-    ("manufacturer_zh", "製造商（中文）"),
-    ("distributor_zh", "供應商（中文）"),
+    ("legal_classification_zh", "法定分類"),
+    ("atc_classification_zh", "ATC 分類"),
+    ("manufacturer_zh", "製造商"),
+    ("distributor_zh", "供應商"),
 ]
 
-MAX_ROWS = 500  # PDF 太多筆會太大，先限制前 500 筆
+MAX_ROWS = 50  # 只顯示前 50 筆記錄
 
 
 def escape(s):
@@ -85,15 +97,33 @@ def csv_to_html(csv_path, max_rows=None):
     if max_rows:
         rows = rows[:max_rows]
 
-    col_keys = [k for k, _ in COLUMNS]
-    headers_html = "".join(f"<th>{escape(label)}</th>" for _, label in COLUMNS)
+    # 欄位順序對應的 CSS class
+    COL_CLASSES = {
+        "mednbr": "col-id",
+        "product_name_zh": "col-name-zh",
+        "product_name_en": "col-name-en",
+        "pharmaceutical_form_en": "col-form",
+        "route_of_administration_zh": "col-route",
+        "active_ingredients_zh": "col-ai-zh",
+        "active_ingredients_en": "col-ai-en",
+        "legal_classification_zh": "col-legal",
+        "atc_classification_zh": "col-atc",
+        "manufacturer_zh": "col-mfr",
+        "distributor_zh": "col-dist",
+    }
+
+    headers_html = "".join(f'<th class="col-no">序號</th>') + "".join(
+        f'<th class="{COL_CLASSES.get(k, "")}">{escape(label)}</th>'
+        for k, label in COLUMNS
+    )
 
     rows_html = ""
     for i, row in enumerate(rows, 1):
-        cells = []
-        cells.append(f'<td class="no">{i}</td>')
-        for key, _ in COLUMNS[1:]:  # skip record_id (already shown as no)
-            cells.append(f"<td>{escape(row.get(key, ''))}</td>")
+        cells = [f'<td class="no">{i}</td>']
+        for key, label in COLUMNS:
+            cls = COL_CLASSES.get(key, "")
+            val = row.get(key, "") or ""
+            cells.append(f'<td class="{cls}">{escape(val)}</td>')
         rows_html += f"<tr>{''.join(cells)}</tr>\n"
 
     title = "澳門藥物資料列表"
