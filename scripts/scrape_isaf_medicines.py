@@ -453,6 +453,41 @@ def run(limit=None):
 
     print(f"完成！共 {len(results)} 筆記錄已寫入 {CSV_FILE}")
 
+    # ── 後續處理：生成 JSON + PDF ──
+    try:
+        import subprocess
+        import sys
+
+        # JSON（多層結構）
+        json_file = CSV_FILE.replace(".csv", ".json")
+        script_dir = os.path.dirname(os.path.abspath(__file__)) or "."
+        json_script = os.path.join(script_dir, "csv_to_json.py")
+        result_json = subprocess.run(
+            [sys.executable, json_script, CSV_FILE, json_file],
+            capture_output=True, text=True,
+            cwd=script_dir
+        )
+        if result_json.returncode == 0:
+            print(result_json.stdout.strip())
+        else:
+            print(f"JSON 生成失敗: {result_json.stderr[:200]}")
+
+        # PDF（前50筆預覽）
+        pdf_file = CSV_FILE.replace(".csv", "_preview.pdf")
+        script_dir = os.path.dirname(os.path.abspath(__file__)) or "."
+        result_pdf = subprocess.run(
+            [sys.executable, "csv_to_pdf.py", CSV_FILE, pdf_file],
+            capture_output=True, text=True,
+            cwd=script_dir
+        )
+        if result_pdf.returncode == 0:
+            print(result_pdf.stdout.strip())
+        else:
+            print(f"PDF 生成失敗: {result_pdf.stderr[:200]}")
+
+    except Exception as e:
+        print(f"後續處理略過（JSON/PDF）: {e}")
+
 
 if __name__ == "__main__":
     import argparse
