@@ -58,8 +58,8 @@ FIELDS = [
     "active_ingredients_zh", "active_ingredients_pt", "active_ingredients_en",
     # 法定分類
     "legal_classification_zh", "legal_classification_pt", "legal_classification_en",
-    # ATC 分類
-    "atc_code", "atc_classification_zh", "atc_classification_pt", "atc_classification_en",
+    # ATC 分類（多個以 ||| 分隔，同 entry 中/葡/英以 ||BRK|| 分隔）
+    "atc_classification_zh", "atc_classification_pt", "atc_classification_en",
     # 製造商
     "manufacturer_zh", "manufacturer_pt", "manufacturer_en",
     # 供應商
@@ -252,16 +252,23 @@ def parse_detail(html, option_texts):
         # ── ATC 分類（需在法定分類之前判斷）──
         elif any(k in label_text for k in ["atc", "anatomical therapeutic", "classificação fármaco"]):
             text_val = td_text(value_td)
-            # ATC code 是第一段開頭的字母+數字
-            parts = text_val.split("||BRK||")
-            first = parts[0].strip() if parts else ""
-            code_match = re.match(r"^([A-Z]{2,4}\d{2,4}[A-Z]?)", first) or re.match(r"^([A-Z]\d{2}[A-Z0-9]+)", first)
-            atc_code = code_match.group(1).strip() if code_match else ""
-            zh, pt, en = split_trilingual(text_val)
-            data["atc_code"] = atc_code
-            data["atc_classification_zh"] = zh
-            data["atc_classification_pt"] = pt
-            data["atc_classification_en"] = en
+            # 結構與活性成份相同：
+            #   每個ATC entry：zh ||BRK|| pt ||BRK|| en（每段後有<br>）
+            #   多个ATC entry之間：||BRK|| ||BRK||（雙<br>產生雙空段）
+            # 算法：split → 去除空字串 → 每3個非空段為一組（zh, pt, en）
+            zh_list, pt_list, en_list = [], [], []
+            non_empty = [p.strip() for p in text_val.split("||BRK||") if p.strip()]
+            for i in range(0, len(non_empty), 3):
+                zh = non_empty[i].strip()
+                pt = non_empty[i + 1].strip() if i + 1 < len(non_empty) else ""
+                en = non_empty[i + 2].strip() if i + 2 < len(non_empty) else ""
+                if zh or en:
+                    zh_list.append(zh)
+                    pt_list.append(pt)
+                    en_list.append(en)
+            data["atc_classification_zh"] = "|||".join(zh_list)
+            data["atc_classification_pt"] = "|||".join(pt_list)
+            data["atc_classification_en"] = "|||".join(en_list)
 
         # ── 法定分類 ──
         elif any(k in label_text for k in ["法定分類", "classifica", "forensic classification"]):
