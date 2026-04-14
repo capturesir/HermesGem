@@ -255,7 +255,7 @@ def parse_detail(html, option_texts):
             # ATC code 是第一段開頭的字母+數字
             parts = text_val.split("||BRK||")
             first = parts[0].strip() if parts else ""
-            code_match = re.match(r"^([A-Z]\d{2}[A-Z]?\s*\d*)", first)
+            code_match = re.match(r"^([A-Z]{2,4}\d{2,4}[A-Z]?)", first) or re.match(r"^([A-Z]\d{2}[A-Z0-9]+)", first)
             atc_code = code_match.group(1).strip() if code_match else ""
             zh, pt, en = split_trilingual(text_val)
             data["atc_code"] = atc_code
