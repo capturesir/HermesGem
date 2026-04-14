@@ -25,7 +25,7 @@ AIGC:
 | 前端服務 | ✅ 運行中 (port 5176) |
 
 **上次檢查**: 2026-04-14 18:08 (Asia/Macau)
-**Git HEAD`: `10cc147` — feat: 爬蟲完成後自動生成多層結構JSON及PDF預覽
+**Git HEAD`: `945511a` — fix(K09): appointmentController type validation & clear error messages
 **DB 狀態**: 19 patients, 13 appointments, 15 users
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
@@ -54,7 +54,7 @@ AIGC:
 | P1 | K06 | 前端審核 | 刪改操作未完整記錄操作人員身份 | 中優先 |
 | P1 | K07 | 前端效能 | 全部模組一口氣請求，影響首頁載入速度 | 中優先 |
 | P2 | K08 | 身份驗證 | 只支援帳號密碼登入，無雙重驗證（2FA）| 低優先 |
-| P1 | K09 | 預約 API | 錯誤訊息誤導：「病人編號和診症日期為必填項」但實際是 `type` 欄位 enum 不接受 `new/follow-up`，後端 log 可見 `Data truncated for column 'type'`；前端傳 `type:new` 或 `type:follow-up` 均失敗，需用 `first/followup/urgent` | 中優先 |
+| ✅ P1 | K09 | 預約 API | 錯誤訊息誤導：「病人編號和診症日期為必填項」但實際是 `type` 欄位 enum 不接受 `new/follow-up`，後端 log 可見 `Data truncated for column 'type'`；前端傳 `type:new` 或 `type:follow-up` 均失敗，需用 `first/followup/urgent` | 中優先 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
