@@ -108,23 +108,43 @@ const getAppointmentById = async (req, res) => {
 };
 
 // Create appointment
+const VALID_APPOINTMENT_TYPES = ['first', 'followup', 'urgent'];
+
+const normalizeAppointmentType = (type) => {
+  if (!type) return 'first';
+  // Normalize common variants
+  if (type === 'follow-up' || type === 'follow_up' || type === 'followup') return 'followup';
+  if (type === 'first-visit' || type === 'first_visit' || type === 'new') return 'first';
+  if (type === 'urgent' || type === 'emergency') return 'urgent';
+  return type;
+};
+
 const createAppointment = async (req, res) => {
   try {
     const { patient_id, doctor_id, date, time, type, notes } = req.body;
 
-    if (!patient_id || !date) {
-      return res.status(400).json({ error: '病人編號和診症日期為必填項' });
+    // 明確欄位驗證，回傳清楚錯誤訊息
+    if (!patient_id) {
+      return res.status(400).json({ error: '病人編號為必填項' });
+    }
+    if (!date) {
+      return res.status(400).json({ error: '診症日期為必填項' });
+    }
+
+    // 驗證並 normalize type
+    const rawType = type || 'first';
+    const normalizedType = normalizeAppointmentType(rawType);
+    if (!VALID_APPOINTMENT_TYPES.includes(normalizedType)) {
+      return res.status(400).json({
+        error: `無效的預約類型：'${type}'。請使用 first（初診）、followup（複診）或 urgent（緊急）`
+      });
     }
 
     // Verify patient exists
     const [patient] = await pool.execute('SELECT * FROM patients WHERE id = ?', [patient_id]);
     if (patient.length === 0) {
-      return res.status(400).json({ error: '病人不存在' });
+      return res.status(400).json({ error: '病人不存在，請確認病人編號正確' });
     }
-
-    // Normalize type: convert 'follow-up' to 'followup' to match DB enum
-    let normalizedType = type || 'first';
-    if (normalizedType === 'follow-up') normalizedType = 'followup';
 
     const id = generateId();
     await pool.execute(
@@ -147,7 +167,14 @@ const createAppointment = async (req, res) => {
     res.status(201).json(rows[0]);
   } catch (error) {
     console.error('Create appointment error:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    const msg = error?.message || '';
+    if (msg.includes('ER_TRUNCATED_WRONG_VALUE')) {
+      return res.status(400).json({ error: `無效的預約類型：'${req.body.type}'。請使用 first（初診）、followup（複診）或 urgent（緊急）` });
+    }
+    if (msg.includes('ER_NO_REFERENCED_ROW') || msg.includes('foreign key')) {
+      return res.status(400).json({ error: '無效的病人編號或醫生編號，請確認資料正確' });
+    }
+    res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
 
@@ -162,13 +189,23 @@ const updateAppointment = async (req, res) => {
       return res.status(404).json({ error: '預約不存在' });
     }
 
+    // Validate and normalize type if provided
+    if (type !== undefined) {
+      const normalizedType = normalizeAppointmentType(type);
+      if (!VALID_APPOINTMENT_TYPES.includes(normalizedType)) {
+        return res.status(400).json({
+          error: `無效的預約類型：'${type}'。請使用 first（初診）、followup（複診）或 urgent（緊急）`
+        });
+      }
+    }
+
     // Dynamically build SET clause only for fields that are provided
     const fields = [];
     const values = [];
     if (doctor_id !== undefined) { fields.push('doctor_id = ?'); values.push(doctor_id); }
     if (date !== undefined) { fields.push('date = ?'); values.push(date); }
     if (time !== undefined) { fields.push('time = ?'); values.push(time); }
-    if (type !== undefined) { fields.push('type = ?'); values.push(type); }
+    if (type !== undefined) { fields.push('type = ?'); values.push(normalizeAppointmentType(type)); }
     if (notes !== undefined) { fields.push('notes = ?'); values.push(notes); }
     if (status !== undefined) { fields.push('status = ?'); values.push(status); }
 
@@ -196,7 +233,16 @@ const updateAppointment = async (req, res) => {
     res.json(rows[0]);
   } catch (error) {
     console.error('Update appointment error:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    const msg = error?.message || '';
+    if (msg.includes('ER_TRUNCATED_WRONG_VALUE')) {
+      return res.status(400).json({
+        error: `無效的預約類型：'${req.body.type}'。請使用 first（初診）、followup（複診）或 urgent（緊急）`
+      });
+    }
+    if (msg.includes('ER_NO_REFERENCED_ROW') || msg.includes('foreign key')) {
+      return res.status(400).json({ error: '無效的病人編號或醫生編號，請確認資料正確' });
+    }
+    res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
 
@@ -233,7 +279,11 @@ const checkInAppointment = async (req, res) => {
     res.json(rows[0]);
   } catch (error) {
     console.error('Check-in appointment error:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    const msg = error?.message || '';
+    if (msg.includes('ER_TRUNCATED_WRONG_VALUE')) {
+      return res.status(400).json({ error: '狀態值無效，請使用 pending、checked-in、completed 或 cancelled' });
+    }
+    res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
 
@@ -272,7 +322,11 @@ const completeAppointment = async (req, res) => {
     res.json(rows[0]);
   } catch (error) {
     console.error('Complete appointment error:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    const msg = error?.message || '';
+    if (msg.includes('ER_TRUNCATED_WRONG_VALUE')) {
+      return res.status(400).json({ error: '狀態值無效，請使用 pending、checked-in、completed 或 cancelled' });
+    }
+    res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
 
@@ -327,7 +381,7 @@ const cancelAppointment = async (req, res) => {
     res.json(rows[0]);
   } catch (error) {
     console.error('Cancel appointment error:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
 
@@ -355,7 +409,7 @@ const deleteAppointment = async (req, res) => {
     res.json({ message: '預約已刪除' });
   } catch (error) {
     console.error('Delete appointment error:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
 
@@ -384,7 +438,7 @@ const getWaitingList = async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error('Get waiting list error:', error);
-    res.status(500).json({ error: '伺服器錯誤' });
+    res.status(500).json({ error: '伺服器錯誤，請稍後再試' });
   }
 };
 
