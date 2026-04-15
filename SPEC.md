@@ -55,6 +55,7 @@ AIGC:
 | P1 | K07 | 前端效能 | 全部模組一口氣請求，影響首頁載入速度 | 中優先 |
 | P2 | K08 | 身份驗證 | 只支援帳號密碼登入，無雙重驗證（2FA）| 低優先 |
 | ✅ P1 | K09 | 預約 API | 錯誤訊息誤導：「病人編號和診症日期為必填項」但實際是 `type` 欄位 enum 不接受 `new/follow-up`，後端 log 可見 `Data truncated for column 'type'`；前端傳 `type:new` 或 `type:follow-up` 均失敗，需用 `first/followup/urgent` | 中優先 |
+| P0 | K10 | 前端病人頁面 | 病人資料庫結構已更新（新增 emergency_contact_phone2、contact_address、emergency_contact_address、name_en、id_type、gold_card_number、insurance_type、insurance_number 等欄位），前端表單及列表頁尚未配合重構 | 高優先 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
