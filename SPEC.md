@@ -24,22 +24,26 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-14 18:08 (Asia/Macau)
-**Git HEAD`: `945511a` — fix(K09): appointmentController type validation & clear error messages
-**DB 狀態**: 19 patients, 13 appointments, 15 users
+**上次檢查**: 2026-04-15 18:08 (Asia/Macau)
+**Git HEAD**: `8a5a4bd` — chore: 新增 K10：前端病人頁面配合新資料庫結構重構
+**DB 狀態**: 20 patients, 14 appointments, 15 users
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
 
-### 2026-04-14 18:08 (本次)
-- Test a) doctor1 登入 → 新增病人 ✅ → 新增預約 ✅ (需用 `type:first` 而非 `type:new`；backend log 可見 `Data truncated for column 'type'` 初試失敗)
-- Test b) admin 登入 → #Rate Limited (短時間大量登入測試，5分鐘冷卻)
-- Test c) 預約狀態更新 → Skipped (受 rate limit 影響)
-- Test d) 刪除病人 → Skipped (受 rate limit 影響)
-- **New Issue Found**: K09 - 預約 API `type` 欄位 enum 為 `first/followup/urgent`，但錯誤訊息寫「病人編號和診症日期為必填項」，誤導性高（實際問題是 type 無效）
-
+### 2026-04-15 18:08 (本次)
+- Test a) doctor1 登入 → 新增病人 ✅ → 新增預約 ⚠️ (需用 `date` 而非 `appointment_date`，K11)
+- Test b) admin 登入 → 新增用戶 ✅ → 確認存在 ✅
+- Test c) 預約狀態更新 (pending→checked-in→completed) ✅
+- Test d) 刪除病人（doctor）✅ 正確被後端權限拦截
+- Test d) 刪除病人（admin）✅ 成功刪除，列表確認消失
+- **New Issue Found**: K11 - 預約 API `date` vs `appointment_date` 欄位不一致
+  - 後端 Controller 讀取 `req.body.date`（欄位名即 `date`）
+  - 但前端表單可能傳 `appointment_date`，導致 400 「診症日期為必填項」
+  - GET 列表查詢則用 query `appointment_date`，三者不一致
+  - 建議：統一改後端支援 `appointment_date`（更明確的欄位名）
 ---
 
 ## 0.1 待解決問題 (Known Issues)
@@ -56,6 +60,7 @@ AIGC:
 | P2 | K08 | 身份驗證 | 只支援帳號密碼登入，無雙重驗證（2FA）| 低優先 |
 | ✅ P1 | K09 | 預約 API | 錯誤訊息誤導：「病人編號和診症日期為必填項」但實際是 `type` 欄位 enum 不接受 `new/follow-up`，後端 log 可見 `Data truncated for column 'type'`；前端傳 `type:new` 或 `type:follow-up` 均失敗，需用 `first/followup/urgent` | 中優先 |
 | P0 | K10 | 前端病人頁面 | 病人資料庫結構已更新（新增 emergency_contact_phone2、contact_address、emergency_contact_address、name_en、id_type、gold_card_number、insurance_type、insurance_number 等欄位），前端表單及列表頁尚未配合重構 | 高優先 |
+| P0 | K11 | 預約 API 欄位不一致 | 後端建立/更新預約使用 `date` 欄位，但 GET 列表前端請求 `appointment_date`（query param）；前端建立預約表單實際傳 `appointment_date` 而非 `date`，導致「診症日期為必填項」錯誤。正確做法：統一使用 `appointment_date` 並修改後端對應 | 高優先，影響新建預約功能 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
@@ -98,6 +103,7 @@ AIGC:
 | P1 | 13.17 | 診症時建立覆診預約 | 完成診症前可直接新增覆診 |
 | P1 | 13.18 | 覆診跟進（醫生專屬）| 醫生建立覆診計劃，追蹤下次就診 |
 | P2 | 13.19 | 文件輸出（模板系統）| 轉介專科、驗單、醫療記錄、建議書、報告書、返港 |
+| P1 | 13.24 | AI 語音輔助診症（SOAP 自動填寫）| 醫生在診症過程中支援錄取與病人對話，AI 即時分析對話內容，自動生成 SOAP 記錄（主觀症狀、客觀發現、評估、計劃），醫生確認後一鍵寫入，大幅減少文書時間 |
 
 | P1 | 13.20 | 支援多語言介面 | 中文/英文/葡文三語界面，切換靈活 |
 | P1 | 13.20 | 支援多語言介面 | 中文/英文/葡文三語界面，切換靈活 |
