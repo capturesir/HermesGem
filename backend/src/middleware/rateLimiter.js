@@ -1,9 +1,9 @@
 const rateLimit = require('express-rate-limit');
 
-// 一般 API 限流：每分鐘 100 請求
+// 一般 API 限流：每分鐘 500 請求
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 分鐘
-  max: 100,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: '請求太頻繁，請稍後再試' },
@@ -12,10 +12,10 @@ const apiLimiter = rateLimit({
   }
 });
 
-// 登入 API 限流：每 5 分鐘 10 次（防止暴力破解）
+// 登入 API 限流：每 5 分鐘 30 次（防止暴力破解）
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 分鐘
-  max: 10,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: '登入嘗試過多，請 5 分鐘後再試' },
