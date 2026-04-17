@@ -24,16 +24,25 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-15 18:08 (Asia/Macau)
-**Git HEAD**: `8a5a4bd` — chore: 新增 K10：前端病人頁面配合新資料庫結構重構
-**DB 狀態**: 20 patients, 14 appointments, 15 users
+**上次檢查**: 2026-04-16 18:08 (Asia/Macau)
+**本次檢查**: 2026-04-16 18:10 (Asia/Macau)
+**Git HEAD**: `38503f0` — feat: 新增 13.24 AI 語音輔助診症（SOAP 自動填寫）至待開發事項
+**DB 狀態**: 22 patients, 16 appointments, 19 users（測試數據已入庫）
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
 
-### 2026-04-15 18:08 (本次)
+### 2026-04-16 18:10 (本次)
+- Test a) doctor1 → 新增病人 ✅ → 新增預約 ⚠️ K11 仍存在（`appointment_date` 欄位被後端忽略，須用 `date`）
+- Test b) admin → 新增用戶 ✅ → 確認存在 ✅
+- Test c) 預約狀態更新 (pending→checked-in→completed) ✅（需用 PUT 非 PATCH）
+- Test d) doctor 刪除病人 → ✅ 後端正確拦截（需再驗證）
+- Test d) admin 刪除病人 → ✅ 成功，列表確認消失
+- **K11 仍未修復**：後端 Controller 統一使用 `req.body.date` 和 `req.query.date`，前端表單傳 `appointment_date` 導致新建預約失敗
+
+### 2026-04-15 18:08 (上次)
 - Test a) doctor1 登入 → 新增病人 ✅ → 新增預約 ⚠️ (需用 `date` 而非 `appointment_date`，K11)
 - Test b) admin 登入 → 新增用戶 ✅ → 確認存在 ✅
 - Test c) 預約狀態更新 (pending→checked-in→completed) ✅
@@ -104,6 +113,7 @@ AIGC:
 | P1 | 13.18 | 覆診跟進（醫生專屬）| 醫生建立覆診計劃，追蹤下次就診 |
 | P2 | 13.19 | 文件輸出（模板系統）| 轉介專科、驗單、醫療記錄、建議書、報告書、返港 |
 | P1 | 13.24 | AI 語音輔助診症（SOAP 自動填寫）| 醫生在診症過程中支援錄取與病人對話，AI 即時分析對話內容，自動生成 SOAP 記錄（主觀症狀、客觀發現、評估、計劃），醫生確認後一鍵寫入，大幅減少文書時間 |
+| P1 | 13.25 | AI 病人輔助助手（僅參考病人數據）| 在病人主介面加入 AI 輔助功能，進入輔助介面後 AI 僅參考該病人的醫療記錄及文件提供意見；使用權限僅限管理員及醫生；所有問答內容及使用者身份均作記錄（審計日誌） |
 
 | P1 | 13.20 | 支援多語言介面 | 中文/英文/葡文三語界面，切換靈活 |
 | P1 | 13.20 | 支援多語言介面 | 中文/英文/葡文三語界面，切換靈活 |
