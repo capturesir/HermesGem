@@ -78,7 +78,7 @@ AIGC:
 
 | 優先 | ID | 模組 | 問題描述 | 備註 |
 |------|----|------|---------|------|
-| P0 | K01 | ~~前端保安~~ | ~~Doctor 可刪除任意病人，需修正後端權限或前端限制~~ → 已解決：後端 requirePermission 攔截 + 前端 admin 可見刪除鈕 | 高優先 |
+| ✅ P0 | K01 | ~~前端保安~~ | ~~Doctor 可刪除任意病人，需修正後端權限或前端限制~~ → 已解決：後端 requirePermission 攔截 + 前端 admin 可見刪除鈕 | 高優先 |
 | P0 | K02 | 後端效能 | slow_query_log 未開啟，大量查詢無優化；建議建立必要索引 | 高優先 |
 | P1 | K03 | 前端日誌 | 日誌頁面及功能不完整 | 中優先 |
 | P1 | K04 | 前端效能 | 前端過度請求問題，懶加載未全面實施 | 中優先 |
@@ -102,6 +102,7 @@ AIGC:
 | R06 | Appointments | ~~就診狀態更新覆蓋問題~~ 已修復 | `c5fe82f` |
 | R07 | 前端保安 | ~~Doctor 可刪除任意病人~~ 後端 requirePermission 拦截（doctor.delete=false）+ 前端 admin 可見刪除鈕 | `a2efcf3` + constants.js |
 | R08 | K11 預約 API 欄位不一致 | ~~後端 `date` vs 前端 `appointment_date`~~ 前後端統一使用 `date`，`type` 預設值改為 `followup` | `681b521` |
+| R09 | K09 預約 API type 驗證 | ~~錯誤訊息誤導「病人編號和診症日期為必填項」~~ 後端新增 type ENUM 驗證 + 清楚錯誤訊息 + normalizeAppointmentType | `945511a` |
 
 ## 13. 待開發功能 (Future Development Roadmap)
 
