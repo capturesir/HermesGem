@@ -111,7 +111,7 @@ const getAppointmentById = async (req, res) => {
 const VALID_APPOINTMENT_TYPES = ['first', 'followup', 'urgent'];
 
 const normalizeAppointmentType = (type) => {
-  if (!type) return 'first';
+  if (!type) return 'followup';
   // Normalize common variants
   if (type === 'follow-up' || type === 'follow_up' || type === 'followup') return 'followup';
   if (type === 'first-visit' || type === 'first_visit' || type === 'new') return 'first';
@@ -132,7 +132,7 @@ const createAppointment = async (req, res) => {
     }
 
     // 驗證並 normalize type
-    const rawType = type || 'first';
+    const rawType = type || 'followup';
     const normalizedType = normalizeAppointmentType(rawType);
     if (!VALID_APPOINTMENT_TYPES.includes(normalizedType)) {
       return res.status(400).json({

@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   doctor_id VARCHAR(36),
   date DATE NOT NULL,
   time TIME,
-  type ENUM('first', 'followup', 'urgent') DEFAULT 'first',
+  type ENUM('first', 'followup', 'urgent') DEFAULT 'followup',
   status ENUM('pending', 'checked-in', 'completed', 'cancelled') DEFAULT 'pending',
   notes TEXT,
   cancel_reason TEXT,
