@@ -24,17 +24,36 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-16 18:08 (Asia/Macau)
-**本次檢查**: 2026-04-16 18:10 (Asia/Macau)
-**Git HEAD**: `38503f0` — feat: 新增 13.24 AI 語音輔助診症（SOAP 自動填寫）至待開發事項
-**DB 狀態**: 22 patients, 16 appointments, 19 users（測試數據已入庫）
+**上次檢查**: 2026-04-17 18:08 (Asia/Macau)
+**本次檢查**: 2026-04-19 06:08 (Asia/Macau)
+**Git HEAD**: `681b521` — fix: 預設預約類型改為 followup（資料庫+後端+前端），並修正K11一致性
+**DB 狀態**: 22 patients, 16 appointments（測試數據已入庫）
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
 
-### 2026-04-16 18:10 (本次)
+### 2026-04-19 06:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number 必填）→ 新增預約 ✅（`date` 欄位，`type:followup`）→ 出現在列表 ✅
+- Test b) admin → 新增用戶 ✅ → 確認存在於用戶列表 ✅
+- Test c) 預約狀態更新 (pending→checked-in→completed→list確認) ✅
+- Test d) doctor 刪除病人 → ✅ 後端正確拦截（403: 您沒有delete權限）
+- Test d) admin 刪除病人 → ✅ 成功刪除，列表確認消失 ✅
+- **K11 仍未修復**：後端 API `POST /appointments` 仍只接受 `date` 欄位，`appointment_date` 導致「診症日期為必填項」
+- **K10 未修復**：前端新25欄重構（13.13，P0）仍待開發
+- No new issues found
+
+### 2026-04-17 18:08 (上次)
+- Test a) doctor1 → 新增病人 ✅ → 新增預約 ✅（用 `date` 欄位成功）→ ⚠️ K11 仍存在（`appointment_date` 仍被後端忽略）
+- Test b) admin → 新增用戶 ✅ → 確認存在 ✅
+- Test c) 預約狀態更新 (pending→checked-in→completed) ✅
+- Test d) doctor 刪除病人 → ✅ 後端正確拦截
+- Test d) admin 刪除病人 → ✅ 成功刪除，列表確認消失
+- **K11 仍未修復**：後端建立/更新預約使用 `date` 欄位，`appointment_date` 仍回「診症日期為必填項」
+- K10: 前端病人頁面配合新25欄重構 — 仍在待開發（13.13，P0）
+
+### 2026-04-16 18:10 (上次)
 - Test a) doctor1 → 新增病人 ✅ → 新增預約 ⚠️ K11 仍存在（`appointment_date` 欄位被後端忽略，須用 `date`）
 - Test b) admin → 新增用戶 ✅ → 確認存在 ✅
 - Test c) 預約狀態更新 (pending→checked-in→completed) ✅（需用 PUT 非 PATCH）
