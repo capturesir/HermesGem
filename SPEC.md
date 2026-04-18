@@ -88,7 +88,7 @@ AIGC:
 | P2 | K08 | 身份驗證 | 只支援帳號密碼登入，無雙重驗證（2FA）| 低優先 |
 | ✅ P1 | K09 | 預約 API | 錯誤訊息誤導：「病人編號和診症日期為必填項」但實際是 `type` 欄位 enum 不接受 `new/follow-up`，後端 log 可見 `Data truncated for column 'type'`；前端傳 `type:new` 或 `type:follow-up` 均失敗，需用 `first/followup/urgent` | 中優先 |
 | P0 | K10 | 前端病人頁面 | 病人資料庫結構已更新（新增 emergency_contact_phone2、contact_address、emergency_contact_address、name_en、id_type、gold_card_number、insurance_type、insurance_number 等欄位），前端表單及列表頁尚未配合重構 | 高優先 |
-| P0 | K11 | 預約 API 欄位不一致 | 後端建立/更新預約使用 `date` 欄位，但 GET 列表前端請求 `appointment_date`（query param）；前端建立預約表單實際傳 `appointment_date` 而非 `date`，導致「診症日期為必填項」錯誤。正確做法：統一使用 `appointment_date` 並修改後端對應 | 高優先，影響新建預約功能 |
+| ✅ P0 | K11 | 預約 API 欄位不一致 | → 已解決：`appointments.type` 預設值改為 `followup`，前後端統一使用 `date` 欄位（`681b521`）| 高優先，影響新建預約功能 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
@@ -101,6 +101,7 @@ AIGC:
 | R05 | 前端效能 | ~~首次載入過慢~~ 部分代碼分割已實施 | `7f57f85` |
 | R06 | Appointments | ~~就診狀態更新覆蓋問題~~ 已修復 | `c5fe82f` |
 | R07 | 前端保安 | ~~Doctor 可刪除任意病人~~ 後端 requirePermission 拦截（doctor.delete=false）+ 前端 admin 可見刪除鈕 | `a2efcf3` + constants.js |
+| R08 | K11 預約 API 欄位不一致 | ~~後端 `date` vs 前端 `appointment_date`~~ 前後端統一使用 `date`，`type` 預設值改為 `followup` | `681b521` |
 
 ## 13. 待開發功能 (Future Development Roadmap)
 
