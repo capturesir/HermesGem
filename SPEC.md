@@ -24,17 +24,26 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-17 18:08 (Asia/Macau)
-**本次檢查**: 2026-04-19 06:08 (Asia/Macau)
-**Git HEAD**: `681b521` — fix: 預設預約類型改為 followup（資料庫+後端+前端），並修正K11一致性
-**DB 狀態**: 22 patients, 16 appointments（測試數據已入庫）
+**上次檢查**: 2026-04-19 06:08 (Asia/Macau)
+**本次檢查**: 2026-04-20 06:08 (Asia/Macau)
+**Git HEAD**: `4c16515` — feat: 新增完整資料庫結構章節（14張表），日後結構變更需同步更新SPEC
+**DB 狀態**: 22 patients, 16 appointments
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
 
-### 2026-04-19 06:08 (本次)
+### 2026-04-20 06:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number 必填）→ 新增預約 ✅（`date` 欄位，`type:followup`）→ 出現在列表 ✅
+- Test b) admin → 新增用戶 ✅ → 確認存在於用戶列表 ✅
+- Test c) 預約狀態更新 (pending→checked-in→completed→list確認) ✅
+- Test d) doctor 刪除病人 → ✅ 後端正確拦截（403: 您沒有delete權限）
+- Test d) admin 刪除病人 → ✅ 成功刪除，列表確認消失 ✅
+- **K02-K11**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
+
+### 2026-04-19 06:08
 - Test a) doctor1 → 新增病人 ✅（patient_number 必填）→ 新增預約 ✅（`date` 欄位，`type:followup`）→ 出現在列表 ✅
 - Test b) admin → 新增用戶 ✅ → 確認存在於用戶列表 ✅
 - Test c) 預約狀態更新 (pending→checked-in→completed→list確認) ✅
