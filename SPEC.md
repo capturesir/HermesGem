@@ -104,6 +104,240 @@ AIGC:
 | R08 | K11 預約 API 欄位不一致 | ~~後端 `date` vs 前端 `appointment_date`~~ 前後端統一使用 `date`，`type` 預設值改為 `followup` | `681b521` |
 | R09 | K09 預約 API type 驗證 | ~~錯誤訊息誤導「病人編號和診症日期為必填項」~~ 後端新增 type ENUM 驗證 + 清楚錯誤訊息 + normalizeAppointmentType | `945511a` |
 
+
+## 1. 資料庫結構 (Database Schema)
+
+> ⚠️ **注意**：日後若有資料庫結構變更，請同步更新本節。若同時有 init.sql 變更，請在 commit 訊息中標註「含資料庫結構變更」。
+
+共 14 張資料表：
+
+---
+
+### 1.1 patients（病人資料）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|----|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| patient_number | varchar(20) | NO | UNI | | 病人編號 |
+| medical_number | varchar(50) | YES | UNI | | 醫療卡號 |
+| name | varchar(100) | NO | MUL | | 姓名 |
+| name_en | varchar(100) | YES | | | 英文姓名 |
+| gender | varchar(20) | YES | | | 性別 |
+| birth_date | date | YES | | | 出生日期 |
+| gold_card_number | varchar(50) | YES | UNI | | 金卡號 |
+| id_card | varchar(20) | YES | | | 身份證號 |
+| id_type | varchar(20) | YES | | | 證件類型 |
+| phone | varchar(20) | YES | | | 電話 |
+| phone2 | varchar(30) | YES | | | 電話2 |
+| email | varchar(100) | YES | | | 電郵 |
+| address | text | YES | | | 地址 |
+| contact_address | text | YES | | | 聯絡地址 |
+| emergency_contact | varchar(100) | YES | | | 緊急聯絡人 |
+| emergency_contact_address | text | YES | | | 緊急聯絡人地址 |
+| emergency_phone | varchar(20) | YES | | | 緊急聯絡人電話 |
+| emergency_contact_phone2 | varchar(30) | YES | | | 緊急聯絡人電話2 |
+| insurance_type | varchar(50) | YES | | | 保險類型 |
+| insurance_number | varchar(50) | YES | | | 保險號碼 |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP | 創建時間 |
+| created_by | varchar(36) | NO | | | 創建人 ID |
+| created_by_name | varchar(100) | NO | | | 創建人姓名 |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP | 更新時間 |
+
+---
+
+### 1.2 users（使用者）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| username | varchar(50) | NO | UNI | | 登入帳號 |
+| password | varchar(255) | NO | | | 密碼（bcrypt）|
+| name | varchar(100) | NO | | | 姓名 |
+| role | enum('admin','staff','doctor','nurse','patient') | NO | MUL | | 角色 |
+| title | varchar(50) | YES | | | 職稱 |
+| bio | text | YES | | | 個人簡介 |
+| gender | enum('male','female','other','unspecified') | YES | | unspecified | 性別 |
+| avatar | varchar(255) | YES | | | 頭像 URL |
+| is_active | tinyint(1) | YES | | 1 | 是否啟用 |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP | 創建時間 |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP | 更新時間 |
+
+---
+
+### 1.3 appointments（預約）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| patient_id | varchar(36) | NO | MUL | | 病人 ID |
+| doctor_id | varchar(36) | YES | MUL | | 醫生 ID |
+| date | date | NO | MUL | | 診症日期 |
+| time | time | YES | | | 診症時間 |
+| type | enum('first','followup','urgent') | YES | | followup | 預約類型 |
+| status | enum('pending','checked-in','completed','cancelled') | YES | MUL | pending | 狀態 |
+| notes | text | YES | | | 備註 |
+| cancel_reason | text | YES | | | 取消原因 |
+| cancel_document_url | varchar(255) | YES | | | 取消文件 URL |
+| consultation_type | enum('consultation','other') | YES | | consultation | 診症類型 |
+| consultation_notes | text | YES | | | 診症備註 |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP | 創建時間 |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP | 更新時間 |
+
+---
+
+### 1.4 soap_notes（診症記錄）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| patient_id | varchar(36) | NO | MUL | | 病人 ID |
+| visit_date | date | NO | | | 就診日期 |
+| subjective | text | YES | | | 主觀症狀（S）|
+| objective | text | YES | | | 客觀發現（O）|
+| assessment | text | YES | | | 評估（A）|
+| plan | text | YES | | | 計劃（P）|
+| doctor_id | varchar(36) | NO | MUL | | 醫生 ID |
+| notes | text | YES | | | 額外備註 |
+| appointment_id | varchar(36) | YES | MUL | | 關聯預約 ID |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP | 創建時間 |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP | 更新時間 |
+
+---
+
+### 1.5 prescriptions（處方）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| patient_id | varchar(36) | NO | MUL | | 病人 ID |
+| doctor_id | varchar(36) | NO | MUL | | 醫生 ID |
+| appointment_id | varchar(36) | YES | MUL | | 關聯預約 ID |
+| date | date | NO | | | 開方日期 |
+| notes | text | YES | | | 備註 |
+| status | enum('active','filled','expired') | YES | | active | 狀態 |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP | 創建時間 |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP | 更新時間 |
+
+---
+
+### 1.6 prescription_medications（處方藥物）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| prescription_id | varchar(36) | NO | MUL | | 處方 ID |
+| name | varchar(100) | NO | | | 藥物名稱 |
+| dosage | varchar(50) | NO | | | 劑量 |
+| frequency | varchar(100) | NO | | | 用法頻率 |
+| route | enum('oral','topical','injection','inhalation','other') | NO | | | 給藥途徑 |
+| duration | int | NO | | | 療程天數 |
+
+---
+
+### 1.7 documents（病人文件）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| patient_id | varchar(36) | NO | MUL | | 病人 ID |
+| category | enum('lab','imaging','surgery','other') | NO | MUL | | 文件類別 |
+| name | varchar(255) | NO | | | 文件名稱 |
+| file_type | varchar(50) | YES | | | 檔案類型 |
+| file_url | varchar(500) | NO | | | 檔案 URL |
+| file_size | int | YES | | | 檔案大小 |
+| uploaded_by | varchar(36) | NO | MUL | | 上傳者 ID |
+| uploaded_at | timestamp | YES | | CURRENT_TIMESTAMP | 上傳時間 |
+
+---
+
+### 1.8 vital_signs（生命體徵）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| patient_id | varchar(36) | NO | MUL | | 病人 ID |
+| temperature | decimal(4,1) | YES | | | 體溫（°C）|
+| blood_pressure_systolic | int | YES | | | 收縮壓（mmHg）|
+| blood_pressure_diastolic | int | YES | | | 舒張壓（mmHg）|
+| heart_rate | int | YES | | | 心率（bpm）|
+| respiratory_rate | int | YES | | | 呼吸率（/min）|
+| oxygen_saturation | decimal(4,1) | YES | | | 血氧飽和度（%）|
+| weight | decimal(5,1) | YES | | | 體重（kg）|
+| height | decimal(5,1) | YES | | | 身高（cm）|
+| notes | text | YES | | | 備註 |
+| recorded_at | timestamp | YES | | CURRENT_TIMESTAMP | 記錄時間 |
+| recorded_by | varchar(36) | NO | MUL | | 記錄者 ID |
+
+---
+
+### 1.9 allergies（過敏記錄）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| patient_id | varchar(36) | NO | MUL | | 病人 ID |
+| allergen | varchar(100) | NO | | | 過敏原 |
+| type | enum('drug','food','environmental','other') | NO | | | 過敏類型 |
+| severity | enum('mild','moderate','severe','life-threatening') | NO | | | 嚴重程度 |
+| reaction | text | YES | | | 過敏反應 |
+| recorded_at | timestamp | YES | | CURRENT_TIMESTAMP | 記錄時間 |
+
+---
+
+### 1.10 alerts（病人警示）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| patient_id | varchar(36) | NO | MUL | | 病人 ID |
+| level | enum('high','medium','low') | NO | | | 警示等級 |
+| type | enum('allergy','disease','drug','other') | NO | | | 警示類型 |
+| content | text | NO | | | 警示內容 |
+| is_active | tinyint(1) | YES | | 1 | 是否啟用 |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP | 創建時間 |
+
+---
+
+### 1.11 medications（藥物資料庫）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| name | varchar(100) | NO | MUL | | 藥物名稱 |
+| generic_name | varchar(100) | YES | | | 學名 |
+| dosage | varchar(50) | YES | | | 劑量 |
+| route | varchar(50) | YES | | | 給藥途徑 |
+| frequency | varchar(100) | YES | | | 用法頻率 |
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP | 創建時間 |
+
+---
+
+### 1.12 icd10_codes（ICD-10 診斷碼）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(10) | NO | PRI | | 主鍵 |
+| code | varchar(10) | NO | UNI | | ICD-10 代碼 |
+| name_tc | varchar(255) | NO | | | 中文名稱 |
+| name_en | varchar(255) | YES | | | 英文名稱 |
+| name_pt | varchar(500) | YES | | | 葡文名稱 |
+| category_tc | varchar(200) | YES | | | 所屬類別（中文）|
+| category_en | varchar(200) | YES | | | 所屬類別（英文）|
+| category_pt | varchar(200) | YES | | | 所屬類別（葡文）|
+| created_at | timestamp | YES | | CURRENT_TIMESTAMP | 創建時間 |
+
+---
+
+### 1.13 audit_logs（審計日誌）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | varchar(36) | NO | PRI | | UUID 主鍵 |
+| user_id | varchar(36) | NO | MUL | | 操作者 ID |
+| action | varchar(50) | NO | | | 操作類型（CREATE/UPDATE/DELETE）|
+| module | varchar(50) | NO | | | 模組名稱 |
+| details | json | YES | | | 操作的具體內容（JSON）|
+| ip_address | varchar(45) | YES | | | IP 地址 |
+| created_at | timestamp | YES | MUL | CURRENT_TIMESTAMP | 操作時間 |
+
+---
+
+### 1.14 system_settings（系統設定）
+| 欄位 | 類型 | 可空 | 鍵 | 預設 | 說明 |
+|------|------|------|------|------|------|
+| id | int | NO | PRI | AUTO_INCREMENT | 主鍵 |
+| setting_key | varchar(50) | NO | UNI | | 設定鍵名 |
+| setting_value | text | YES | | | 設定值 |
+| description | varchar(255) | YES | | | 說明 |
+| updated_at | timestamp | YES | | CURRENT_TIMESTAMP | 更新時間 |
+
 ## 13. 待開發功能 (Future Development Roadmap)
 
 > 優先次序：P0 = 立即　P1 = 短期　P2 = 中期
