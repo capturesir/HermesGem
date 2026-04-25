@@ -24,15 +24,24 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-25 06:08 (Asia/Macau)
-**本次檢查**: 2026-04-25 18:08 (Asia/Macau)
-**Git HEAD**: `6050d03` — feat: 新增 13.27 智能提醒功能至待開發事項（P1）
+**上次檢查**: 2026-04-25 18:08 (Asia/Macau)
+**本次檢查**: 2026-04-26 06:08 (Asia/Macau)
+**Git HEAD**: `0a40160` — docs: 更新開發進度檢查記錄（2026-04-25 18:08）
 **DB 狀態**: 22 patients, 15 appointments
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
+
+### 2026-04-26 06:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0426-MAX, id:3f064737）→ 新增預約 ✅（type:first, date:2026-04-26, time:10:00, id:802272d3）→ 列表確認出現 ✅
+- Test b) admin → 新增用戶 ✅（username: devtest0426）→ 確認存在於用戶列表 ✅ → 已清理
+- Test c) 預約狀態更新 (pending→checked-in→completed→list確認) ✅
+- Test d) doctor1 嘗試刪除病人 → ✅ 後端正確拦截（「您沒有delete權限」）
+- Test d) admin 刪除病人 → ✅ 成功刪除，DB 確認消失 ✅
+- **K01-K11**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
 
 ### 2026-04-25 18:08 (本次)
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0425-MAX, id:74d45370）→ 新增預約 ✅（type:first, date:2026-04-25, time:14:00, id:ba82fe66）→ 列表確認出現 ✅
