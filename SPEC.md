@@ -24,15 +24,23 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-04-26 06:08 (Asia/Macau)
-**本次檢查**: 2026-04-26 18:08 (Asia/Macau)
-**Git HEAD**: `e379b3b` — docs: 更新開發進度檢查記錄（2026-04-26 06:08）
+**上次檢查**: 2026-04-26 18:08 (Asia/Macau)
+**本次檢查**: 2026-04-27 06:08 (Asia/Macau)
+**Git HEAD**: `e6fe8b1` — docs: 更新開發進度檢查記錄（2026-04-26 18:08）
 **DB 狀態**: 22 patients, 15 appointments
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
+
+### 2026-04-27 06:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0427-MAX, id:0fdea9c3）→ 新增預約 ✅（type:first, date:2026-04-27, time:10:00, id:d31247ba）→ 列表確認出現 ✅（`?date=2026-04-27` 查詢成功）
+- Test b) admin → 新增用戶 ✅（username: devtest0427）→ 確認存在於用戶列表 ✅ → 已清理
+- Test c) 預約狀態更新 (pending→checked-in→completed→列表確認) ✅（PUT /api/appointments/:id，需用 PUT 非 /status endpoint）
+- Test d) admin 刪除病人 → ✅ 成功刪除，「病人不存在」確認消失 ✅
+- **K01-K11**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
 
 ### 2026-04-26 18:08 (本次)
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0426-MAX, id:20dfb55f）→ 新增預約 ✅（type:first, date:2026-04-26, time:10:00, id:337afe8d）→ 列表確認出現 ✅
