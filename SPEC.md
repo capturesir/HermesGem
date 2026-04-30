@@ -203,6 +203,7 @@ AIGC:
 | ✅ P1 | K09 | 預約 API | 錯誤訊息誤導：「病人編號和診症日期為必填項」但實際是 `type` 欄位 enum 不接受 `new/follow-up`，後端 log 可見 `Data truncated for column 'type'`；前端傳 `type:new` 或 `type:follow-up` 均失敗，需用 `first/followup/urgent` | 中優先 |
 | P0 | K10 | 前端病人頁面 | 病人資料庫結構已更新（新增 emergency_contact_phone2、contact_address、emergency_contact_address、name_en、id_type、gold_card_number、insurance_type、insurance_number 等欄位），前端表單及列表頁尚未配合重構 | 高優先 |
 | ✅ P0 | K11 | 預約 API 欄位不一致 | → 已解決：`appointments.type` 預設值改為 `followup`，前後端統一使用 `date` 欄位（`681b521`）| 高優先，影響新建預約功能 |
+| P0 | K12 | 預約 POST API `patient_id` 位置不一致 | 後端 `createAppointment` 讀取 `req.body.patient_id`（需在 JSON body），但 cron 測試長期使用 `?patient_id=X`（query param），導致 400「病人編號為必填項」；API 本體正常（body 方式 ✅），需修正 cron 測試指引；真實前端是否有相同問題待確認 | 高優先 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
