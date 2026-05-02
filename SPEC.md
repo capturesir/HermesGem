@@ -34,6 +34,14 @@ AIGC:
 
 ## 開發進度檢查記錄 (Dev Check Log)
 
+### 2026-05-02 18:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0502A-MAX, id:57d20fe6）→ 新增預約 ✅（type:first, date:2026-05-02, time:14:00, id:c1285bc4）→ 列表確認出現 ✅（K12 body 方式 ✅，query param 方式需用 body）
+- Test b) admin → 新增用戶 ✅（username: devtest0502b, id:見用戶列表）→ 確認存在於用戶列表 ✅（共30人）→ 已清理
+- Test c) 預約狀態更新 (pending→checked-in→completed→列表確認) ✅（completed 狀態已確認寫入）
+- Test d) admin 刪除病人 → ✅ 成功刪除，「病人已刪除」確認 → HTTP 404 ✅ → 已清理
+- **K01-K12**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
+
 ### 2026-05-02 06:08 (本次)
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0502-MAX, id:f1d32089）→ 新增預約 ✅（type:first, date:2026-05-02, time:09:00, id:d43854dd）→ 列表確認出現 ✅（K12 body 方式 ✅）
 - Test b) admin → 新增用戶 ✅（username: devtest0502, id:b026ebc8）→ 確認存在於用戶列表 ✅ → 已清理
