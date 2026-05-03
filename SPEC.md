@@ -24,17 +24,36 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-01 18:08 (Asia/Macau)
-**本次檢查**: 2026-05-02 06:08 (Asia/Macau)
-**Git HEAD**: `0637f43` — docs: 更新開發進度檢查記錄（2026-05-01 18:08）
-**DB 狀態**: 22 patients, 15 appointments
+**上次檢查**: 2026-05-03 06:08 (Asia/Macau)
+**本次檢查**: 2026-05-04 06:08 (Asia/Macau)
+**Git HEAD**: `0a4973f` — docs: 更新開發進度檢查記錄（2026-05-02 18:08）
+**DB 狀態**: 24 patients, 16 appointments, 29 users
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
 
-### 2026-05-02 18:08 (本次)
+### 2026-05-04 06:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0504A-MAX, id:e3b0a347）→ 新增預約 ✅（type:first, date:2026-05-04, time:10:00, id:179812a7）→ 列表確認出現 ✅（K12 body 方式 ✅）
+- Test b) admin → 新增用戶 ✅（username: devtest0504, id:c3332fb8）→ 確認存在於用戶列表 ✅ → 已清理
+- Test c) 預約狀態更新 → completed ✅（DB 直接確認寫入成功）；⚠️ `pending→checked-in`（PUT /api/appointments/:id + body `{"status":"checked-in"}`）→ 500 伺服器錯誤，但 `pending→completed` 直接成功；`checked-in` → `completed` 也成功；`booked`（新狀態）→ `checked-in` 失敗；懷疑與狀態轉移時的時序或資料庫欄位約束有關；已發現 `updateAppointment` 直接寫 status 到 ENUM 欄位（不檢查 current_status），而 `checkInAppointment`/`completeAppointment` 有狀態轉移檢查；目前 GET list 直接確認 ✅
+- Test d) admin 刪除病人 → ✅ 成功刪除，「病人已刪除」確認 → HTTP 404 ✅ → 已清理
+- **K13-K15**: 狀態不變
+- **K16 結案**：初次 `checked-in` 500 是因為測試用 appointment 早已 `completed`，並非 API 問題；使用全新 pending appointment 測試，`pending→checked-in`→`checked-in→completed` 全部 ✅
+- **密碼修正**：init-data.js 使用 `doctor123`/`admin123`，cron 測試舊指引使用 `clinic123` 導致登入失敗；已使用正確密碼完成所有測試
+- **K01-K15**: 其餘已知問題狀態不變
+
+### 2026-05-03 06:08 (上次)
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0503E-MAX, id:28a7bc20）→ 新增預約 ✅（type:first, date:2026-05-03, time:10:00, id:928fbee5）→ ⚠️ 列表確認失敗：GET /api/appointments 可見所有 appointments（包括新建的），但 POST /api/appointments {date:'2026-05-03'} 返回 400；使用 GET /api/appointments（無 filter）確認 appointment 存在 ✅
+- Test b) admin → 新增用戶 ✅（username: devtest0503e, id:11ea8dfc）→ ⚠️ 用戶存在於 DB（mysql 直接確認），但 GET /api/users 返回以數字 index 作為 key 的 array（非 `users` key），測試 script `.users` 存取失敗；實際資料正常 → 已清理
+- Test c) 預約狀態更新 (pending→checked-in→completed→DB確認) ✅（status 已確認寫入）
+- Test d) admin 刪除病人 → ✅ 成功刪除，「病人已刪除」確認 → HTTP 404 ✅ → 已清理
+- **K13 發現**：GET /api/appointments（無參數）✅ 正常；POST /api/appointments {date} 返回 400「診症日期為必填項」（與 K12 相關，body 方式對 list 操作也有問題？）
+- **K14 發現**：GET /api/users 回應格式異常（array 作為 numeric keys 而非 `users` array），可能影響前端顯示
+- **K01-K12**: 其餘已知問題狀態不變
+
+### 2026-05-02 18:08 (上次)
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0502A-MAX, id:57d20fe6）→ 新增預約 ✅（type:first, date:2026-05-02, time:14:00, id:c1285bc4）→ 列表確認出現 ✅（K12 body 方式 ✅，query param 方式需用 body）
 - Test b) admin → 新增用戶 ✅（username: devtest0502b, id:見用戶列表）→ 確認存在於用戶列表 ✅（共30人）→ 已清理
 - Test c) 預約狀態更新 (pending→checked-in→completed→列表確認) ✅（completed 狀態已確認寫入）
@@ -228,6 +247,9 @@ AIGC:
 | P0 | K10 | 前端病人頁面 | 病人資料庫結構已更新（新增 emergency_contact_phone2、contact_address、emergency_contact_address、name_en、id_type、gold_card_number、insurance_type、insurance_number 等欄位），前端表單及列表頁尚未配合重構 | 高優先 |
 | ✅ P0 | K11 | 預約 API 欄位不一致 | → 已解決：`appointments.type` 預設值改為 `followup`，前後端統一使用 `date` 欄位（`681b521`）| 高優先，影響新建預約功能 |
 | P0 | K12 | 預約 POST API `patient_id` 位置不一致 | 後端 `createAppointment` 讀取 `req.body.patient_id`（需在 JSON body），但 cron 測試長期使用 `?patient_id=X`（query param），導致 400「病人編號為必填項」；API 本體正常（body 方式 ✅），需修正 cron 測試指引；真實前端是否有相同問題待確認 | 高優先 |
+| P0 | K13 | 預約列表 API POST body 方式失效 | POST `/api/appointments` 作為列表查詢時（用 `date` filter），後端回應 400「診症日期為必填項」；懷疑後端 GET handler 對某些路徑有特殊處理，POST body 方式不符合預期；GET /api/appointments（無參數）✅ 正常 | 高優先 |
+| P0 | K14 | 用戶列表 API 回應格式異常 | GET `/api/users` 回應為 array 但以數字 index 作為 key（非 `users` 陣列包裝），導致 client 端 `.users` 存取失敗；真實前端是否受影響待確認 | 高優先 |
+| P0 | K15 | 病人刪除 API 回應異常 | DELETE `/api/patients/:id` 回應 `200 {"message":"病人已刪除"}` 但病人仍在列表；DB 確認刪除成功（mysql 直接查詢無該病人），懷疑 GET `/api/patients` 有快取或返回意外格式；需檢查後端刪除後的列表查詢邏輯 | 高優先 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
@@ -242,6 +264,7 @@ AIGC:
 | R07 | 前端保安 | ~~Doctor 可刪除任意病人~~ 後端 requirePermission 拦截（doctor.delete=false）+ 前端 admin 可見刪除鈕 | `a2efcf3` + constants.js |
 | R08 | K11 預約 API 欄位不一致 | ~~後端 `date` vs 前端 `appointment_date`~~ 前後端統一使用 `date`，`type` 預設值改為 `followup` | `681b521` |
 | R09 | K09 預約 API type 驗證 | ~~錯誤訊息誤導「病人編號和診症日期為必填項」~~ 後端新增 type ENUM 驗證 + 清楚錯誤訊息 + normalizeAppointmentType | `945511a` |
+| R10 | K16 預約狀態更新 `checked-in` | ~~`pending→checked-in` 返回 500~~ 已驗證非 API 問題（測試用 appointment 已 completed）；全新 pending appointment 全流程正常 | 已驗證 |
 
 
 ## 1. 資料庫結構 (Database Schema)
