@@ -24,9 +24,9 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-06 06:08 (Asia/Macau)
-**本次檢查**: 2026-05-06 18:08 (Asia/Macau)
-**Git HEAD**: `d60e88b` — docs: 更新開發進度檢查記錄（2026-05-06 06:08）
+**上次檢查**: 2026-05-06 18:08 (Asia/Macau)
+**本次檢查**: 2026-05-07 06:08 (Asia/Macau)
+**Git HEAD**: `223fdf9` — docs: 更新開發進度檢查記錄（2026-05-06 18:08）
 **DB 狀態**: 25 patients, 16 appointments, 29 users
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
@@ -42,6 +42,14 @@ AIGC:
 - Test c) 預約狀態更新 → `pending→checked-in` ✅ → `checked-in→completed` ✅（DB 直接確認 status=completed）
 - Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ GET 回 HTTP 404 ✅ → 已清理
 - **K01-K16**: 所有已知問題狀態不變，無新問題發現
+
+### 2026-05-07 06:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0507B-MAX, id:9cccc3b8）→ 新增預約 ✅（type:first, date:2026-05-07, time:10:00, id:a554459d）→ 列表確認出現 ✅（APT_ID a554459d 存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: devtest0507, id:145230b1）→ 確認存在於用戶列表 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（200 OK, status: checked-in）→ `checked-in→completed` ✅（200 OK, DB 確認 status=completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ GET 回 HTTP 404 ✅ → 已清理
+- **K01-K16**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
 
 ### 2026-05-06 18:08 (本次)
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0506D-MAX, id:40bb0b48）→ 新增預約 ✅（type:first, date:2026-05-06, time:15:00, id:455856a8）→ 列表確認出現 ✅（APT_ID 455856a8 存在於 appointments 列表）
