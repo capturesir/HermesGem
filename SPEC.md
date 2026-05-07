@@ -24,10 +24,10 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-06 18:08 (Asia/Macau)
-**本次檢查**: 2026-05-07 06:08 (Asia/Macau)
-**Git HEAD**: `223fdf9` — docs: 更新開發進度檢查記錄（2026-05-06 18:08）
-**DB 狀態**: 25 patients, 16 appointments, 29 users
+**上次檢查**: 2026-05-07 06:08 (Asia/Macau)
+**本次檢查**: 2026-05-07 18:08 (Asia/Macau)
+**Git HEAD**: `0165020` — docs: 更新開發進度檢查記錄（2026-05-07 06:08）
+**DB 狀態**: 25 patients, 16 appointments (測試後已清理)
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
@@ -42,6 +42,15 @@ AIGC:
 - Test c) 預約狀態更新 → `pending→checked-in` ✅ → `checked-in→completed` ✅（DB 直接確認 status=completed）
 - Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ GET 回 HTTP 404 ✅ → 已清理
 - **K01-K16**: 所有已知問題狀態不變，無新問題發現
+
+### 2026-05-07 18:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0507B-MAX, id:1bcb629e）→ 新增預約 ✅（type:first, date:2026-05-07, time:15:00, id:dc5ebe91）→ GET /appointments/:id 確認 ✅
+  - ⚠️ 首次執行時 appointment 返回 201+UUID 但未寫入 DB（K17）；重測後正常寫入；非確定性問題
+- Test b) admin → 新增用戶 ✅（username: devtest0507f, id:fb1c9051）→ 確認存在於用戶列表 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（200 OK, status: checked-in）→ `checked-in→completed` ✅（200 OK, DB 確認 status=completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ GET 回 HTTP 404 ✅ → 已清理
+- **K17 發現**：預約創建 POST 返回 201 + 有效 UUID，但非確定性未持久化到 DB；懷疑 transaction 時序問題；已追加至 Known Issues
+- **K01-K16, K17**: 其餘已知問題狀態不變
 
 ### 2026-05-07 06:08 (本次)
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0507B-MAX, id:9cccc3b8）→ 新增預約 ✅（type:first, date:2026-05-07, time:10:00, id:a554459d）→ 列表確認出現 ✅（APT_ID a554459d 存在於 appointments 列表）
@@ -283,6 +292,7 @@ AIGC:
 | P0 | K13 | 預約列表 API POST body 方式失效 | POST `/api/appointments` 作為列表查詢時（用 `date` filter），後端回應 400「診症日期為必填項」；懷疑後端 GET handler 對某些路徑有特殊處理，POST body 方式不符合預期；GET /api/appointments（無參數）✅ 正常 | 高優先 |
 | P0 | K14 | 用戶列表 API 回應格式異常 | GET `/api/users` 回應為 array 但以數字 index 作為 key（非 `users` 陣列包裝），導致 client 端 `.users` 存取失敗；真實前端是否受影響待確認 | 高優先 |
 | P0 | K15 | 病人刪除 API 回應異常 | DELETE `/api/patients/:id` 回應 `200 {"message":"病人已刪除"}` 但病人仍在列表；DB 確認刪除成功（mysql 直接查詢無該病人），懷疑 GET `/api/patients` 有快取或返回意外格式；需檢查後端刪除後的列表查詢邏輯 | 高優先 |
+| P0 | K17 | 預約創建非確定性持久化 | 預約 POST 有時返回 201 + 有效 UUID，但資料未實際寫入資料庫（mysql 直接查詢無該記錄）；第二次測試可正常創建並查詢到；懷疑後端在異步流程中 transaction 延遲 rollback 或 commit 時序問題；cron 測試已多次重現 | 高優先 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
