@@ -24,15 +24,23 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-07 06:08 (Asia/Macau)
-**本次檢查**: 2026-05-07 18:08 (Asia/Macau)
-**Git HEAD**: `0165020` — docs: 更新開發進度檢查記錄（2026-05-07 06:08）
+**上次檢查**: 2026-05-07 18:08 (Asia/Macau)
+**本次檢查**: 2026-05-08 06:08 (Asia/Macau)
+**Git HEAD**: `13a85ca` — docs: 更新開發進度檢查記錄（2026-05-07 18:08）
 **DB 狀態**: 25 patients, 16 appointments (測試後已清理)
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
+
+### 2026-05-08 06:08 (本次)
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0508A-MAX, id:c3b34f16）→ 新增預約 ✅（type:first, date:2026-05-08, time:09:00, id:95238af2）→ DB 確認寫入 ✅（status=pending）
+- Test b) admin → 新增用戶 ✅（username: devtest0508, id:c048b77c）→ DB 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（200 OK, status: checked-in）→ `checked-in→completed` ✅（200 OK, DB 確認 status=completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ GET 回 HTTP 404 ✅ → 已清理
+- **K01-K17**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
 
 ### 2026-05-05 18:08 (本次)
 
