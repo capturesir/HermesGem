@@ -42,6 +42,16 @@ AIGC:
 - **K01-K17**: 所有已知問題狀態不變，無新問題發現
 - No new issues found
 
+### 2026-05-10 06:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 25 patients, 16 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0510-MAX, id:e67869f4）→ 新增預約 ✅（type:first, date:2026-05-10, time:09:00, id:53cd6026, status:pending）→ 列表確認出現 ✅（ID 53cd6026 確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: devtest0510, id:4839b02f）→ DB 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（200 OK, DB 確認 status=checked-in）→ `checked-in→completed` ✅（200 OK, DB 確認 status=completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認已不存在 → 已清理
+- **K01-K17**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
+
 ### 2026-05-09 18:08 (本次)
 - **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0509-MAX, id:edcefa08）→ 新增預約 ✅（type:first, date:2026-05-09, time:14:00, id:dd12f12a, status:pending）→ DB 直接確認寫入 ✅
