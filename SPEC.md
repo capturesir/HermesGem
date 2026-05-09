@@ -24,11 +24,11 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-08 06:08 (Asia/Macau)
-**本次檢查**: 2026-05-08 18:08 (Asia/Macau)
-**Git HEAD**: `a97633a` — docs: 更新開發進度檢查記錄（2026-05-08 06:08）
+**上次檢查**: 2026-05-09 06:08 (Asia/Macau)
+**本次檢查**: 2026-05-09 18:08 (Asia/Macau)
+**Git HEAD**: `1f5f194` — docs: 更新開發進度檢查記錄（2026-05-08 18:08）含全項測試通過
 **DB 狀態**: 25 patients, 16 appointments (測試後已清理)
-**後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok"}`
+**後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`
 
 ---
 
@@ -39,6 +39,24 @@ AIGC:
 - Test b) admin → 新增用戶 ✅（username: devtest0508, id:6b487774）→ DB 確認寫入成功 ✅ → 已清理
 - Test c) 預約狀態更新 → `pending→checked-in` ✅（200 OK, status: checked-in，DB 確認）→ `checked-in→completed` ✅（200 OK, DB 確認 status=completed）
 - Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認該病人已不存在 → 已清理
+- **K01-K17**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
+
+### 2026-05-09 18:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0509-MAX, id:edcefa08）→ 新增預約 ✅（type:first, date:2026-05-09, time:14:00, id:dd12f12a, status:pending）→ DB 直接確認寫入 ✅
+- Test b) admin → 新增用戶 ✅（username: devtest0509c, id:aa4efa41）→ DB 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，DB 確認 status=checked-in）→ `checked-in→completed` ✅（DB 確認 status=completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認已不存在 → 已清理
+- **K01-K17**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
+
+### 2026-05-09 06:08 (本次)
+- **後端重啟**：後端進程不在，需重啟 → 已啟動（`backend/src/server.js`，PID 3740414），`/api/health` 回應 ✅
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0509-MAX, id:24ae3a0f）→ 新增預約 ✅（type:first, date:2026-05-09, time:09:00, id:e21c3529）→ DB 直接確認寫入 ✅（status=pending）；K17 未觸發，順利寫入
+- Test b) admin → 新增用戶 ✅（username: devtest0509, id:83964f38）→ DB 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（200 OK, status: checked-in）→ `checked-in→completed` ✅（200 OK, DB 確認 status=completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認已不存在 → 已清理
 - **K01-K17**: 所有已知問題狀態不變，無新問題發現
 - No new issues found
 
