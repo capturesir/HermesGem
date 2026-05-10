@@ -24,10 +24,10 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-10 18:08 (Asia/Macau)
-**本次檢查**: 2026-05-11 07:12 (Asia/Macau)
-**Git HEAD**: `19f74ac` — docs: 更新開發進度檢查記錄（2026-05-10 06:08）含全項測試通過
-**DB 狀態**: 25 patients, 16 appointments (測試後已清理)
+**上次檢查**: 2026-05-11 07:12 (Asia/Macau)
+**本次檢查**: 2026-05-11 14:08 (Asia/Macau)
+**Git HEAD**: `452dca0` — docs: 更新開發進度檢查記錄（2026-05-11 07:12）含全項測試通過
+**DB 狀態**: 25 patients, 16 appointments（測試後已清理）
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`
 
 ---
@@ -40,6 +40,16 @@ AIGC:
 - Test c) 預約狀態更新 → `pending→checked-in` ✅（200 OK, status: checked-in，DB 確認）→ `checked-in→completed` ✅（200 OK, DB 確認 status=completed）
 - Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認該病人已不存在 → 已清理
 - **K01-K17**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
+
+### 2026-05-11 14:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 25 patients, 16 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-05110609, id:b8dd3f80）→ 新增預約 ✅（type:first, date:2026-05-11, time:09:00, id:cd44c305, status:pending）→ 列表確認出現 ✅（ID cd44c305 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: devtest05110610, id:634f6b02）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ✅（200 OK，DB 確認 status=completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認刪除（mysql 直接查詢無該病人）；⚠️ GET /api/patients 列表仍返回該病人（K15 未修復）
+- **K01-K17**: K15 仍未修復（見 K15 描述）；其餘已知問題狀態不變，無新問題發現
 - No new issues found
 
 ### 2026-05-11 07:12 (本次)
