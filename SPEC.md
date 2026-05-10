@@ -24,9 +24,9 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-09 06:08 (Asia/Macau)
-**本次檢查**: 2026-05-09 18:08 (Asia/Macau)
-**Git HEAD**: `1f5f194` — docs: 更新開發進度檢查記錄（2026-05-08 18:08）含全項測試通過
+**上次檢查**: 2026-05-10 18:08 (Asia/Macau)
+**本次檢查**: 2026-05-11 07:12 (Asia/Macau)
+**Git HEAD**: `19f74ac` — docs: 更新開發進度檢查記錄（2026-05-10 06:08）含全項測試通過
 **DB 狀態**: 25 patients, 16 appointments (測試後已清理)
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`
 
@@ -39,6 +39,26 @@ AIGC:
 - Test b) admin → 新增用戶 ✅（username: devtest0508, id:6b487774）→ DB 確認寫入成功 ✅ → 已清理
 - Test c) 預約狀態更新 → `pending→checked-in` ✅（200 OK, status: checked-in，DB 確認）→ `checked-in→completed` ✅（200 OK, DB 確認 status=completed）
 - Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認該病人已不存在 → 已清理
+- **K01-K17**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
+
+### 2026-05-11 07:12 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 25 patients, 16 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0510-MAX, id:f89155b5）→ 新增預約 ✅（type:first, date:2026-05-10, time:09:00, id:8067cb35, status:pending）→ 列表確認出現 ✅（ID 8067cb35 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: devtest0510, id:f7825fc0）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ✅（200 OK，status:completed）
+- Test d) doctor 刪除病人 → ✅ 後端正確拦截（「您沒有delete權限」）；admin token 刪除 ✅ → 列表確認消失 → 已清理
+- **K01-K17**: 所有已知問題狀態不變，無新問題發現
+- No new issues found
+
+### 2026-05-10 18:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 25 patients, 16 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-05101811, id:35138f8f）→ 新增預約 ✅（type:first, date:2026-05-15, time:10:00, id:bdfe0c44, status:pending）→ 列表確認出現 ✅（ID bdfe0c44 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: devtest05101811, id:5830221d）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，DB 確認 status=checked-in）→ `checked-in→completed` ✅（200 OK，DB 確認 status=completed）
+- Test d) doctor 刪除病人 → ✅ 後端正確拦截（「您沒有delete權限」），但需以 admin token 或 header 才能成功刪除
 - **K01-K17**: 所有已知問題狀態不變，無新問題發現
 - No new issues found
 
