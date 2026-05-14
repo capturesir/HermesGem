@@ -24,15 +24,35 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-12 06:08 (Asia/Macau)
-**本次檢查**: 2026-05-12 18:08 (Asia/Macau)
-**Git HEAD**: `85f2076` — docs: 更新開發進度檢查記錄（2026-05-12 06:08）含全項測試通過，K15 未修復
-**DB 狀態**: 25 patients, 16 appointments（測試後已清理）
+**上次檢查**: 2026-05-12 18:08 (Asia/Macau)
+**本次檢查**: 2026-05-14 18:08 (Asia/Macau)
+**Git HEAD**: `b58050c` — docs: 更新開發進度檢查記錄（2026-05-12 18:08）含全項測試通過，K15 未修復
+**DB 狀態**: 26 patients, 17 appointments（測試後已清理）
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
+
+### 2026-05-14 18:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 26 patients, 17 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0514-MAX, id:3738928c）→ 新增預約 ✅（type:first, date:2026-05-14, time:10:00, id:efded510, status:pending）→ 列表確認出現 ✅（ID efded510 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: testdev0514a, id:bbf28b64）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ✅（200 OK，status:completed，DB 確認 completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認該病人已不存在（mysql 直接查詢empty）→ GET /api/patients/:id 未測試（token過期需重新取得）；搜索列表確認消失 ✅（search=TEST-0514-MAX → found:0）→ 已清理
+- **K01-K17**: 所有已知問題狀態不變，無新問題發現；K15 本次未觸發（列表正常消失）
+- No new issues found
+
+### 2026-05-14 06:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 26 patients, 17 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0514-MAX, id:357d2743）→ 新增預約 ✅（type:first, date:2026-05-14, time:10:00, id:c8df4578, status:pending）→ 列表確認出現 ✅（ID c8df4578 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: testdev0514, id:dd76c54b）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ✅（200 OK，status:completed，DB 確認）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ DB 確認該病人已不存在 → GET 列表確認消失 ✅（search=TEST-0514-MAX → found:0）→ 已清理
+- **K01-K17**: 所有已知問題狀態不變，無新問題發現；K15 本次未觸發（列表正常消失）
+- No new issues found
 
 ### 2026-05-08 18:08 (本次)
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0508-MAX, id:ee016bb6）→ 新增預約 ✅（type:first, date:2026-05-08, time:09:00, id:a1aefc4e）→ DB 直接確認寫入 ✅（status=pending）；K17 未觸發，本次順利寫入
