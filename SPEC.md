@@ -24,9 +24,9 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-16 06:08 (Asia/Macau)
-**本次檢查**: 2026-05-17 06:08 (Asia/Macau)
-**Git HEAD**: `8b4e2f9` — docs: 更新開發進度檢查記錄（2026-05-16 06:08）含全項測試通過，K15 未修復
+**上次檢查**: 2026-05-17 18:08 (Asia/Macau)
+**本次檢查**: 2026-05-18 06:08 (Asia/Macau)
+**Git HEAD**: `2a42b7d` — docs: 更新開發進度檢查記錄（2026-05-17 06:08）含全項測試通過，K15 未修復
 **DB 狀態**: 26 patients, 17 appointments（測試後已清理）
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`
 
@@ -44,7 +44,27 @@ AIGC:
 - **K01-K18**: 所有已知問題狀態不變，無新問題發現；K15 本次未觸發（列表正常消失）
 - No new issues found
 
-### 2026-05-17 06:08 (本次)
+### 2026-05-18 06:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 26 patients, 17 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0517-18-MAX, id:6ad5ea71）→ 新增預約 ✅（type:first, date:2026-05-17, time:10:00, id:1b5e6bbe, status:pending）→ 列表確認出現 ✅（ID 1b5e6bbe 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: testdev051718, id:b2ad9fc2）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ✅（200 OK，status:completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ 列表確認消失 ✅（search=TEST-0517-18-MAX → 未找到）→ 已清理
+- **K01-K18**: 所有已知問題狀態不變，無新問題發現；K15 本次未觸發（列表正常消失）
+- No new issues found
+
+### 2026-05-17 18:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 26 patients, 17 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0517-MAX, id:d01b8c14）→ 新增預約 ✅（type:first, date:2026-05-17, time:10:00, id:b250d232, status:pending）→ 列表確認出現 ✅（ID b250d232 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: testdev0517max, id:666a3bc8）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ✅（200 OK，status:completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ 列表確認消失 ✅ → DB 直接確認刪除 ✅ → 已清理
+- **K01-K18**: 所有已知問題狀態不變，無新問題發現；K15 本次未觸發
+- No new issues found
+
+### 2026-05-17 06:08 (上次)
 - **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
 - DB: 26 patients, 17 appointments
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0517A-MAX, id:2d3ff6a0）→ 新增預約 ✅（type:first, date:2026-05-17, time:10:00, id:09ae36e0, status:pending）→ 列表確認出現 ✅（ID 09ae36e0 已確認存在於 appointments 列表）
