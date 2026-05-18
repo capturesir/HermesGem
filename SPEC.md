@@ -24,9 +24,9 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-17 18:08 (Asia/Macau)
-**本次檢查**: 2026-05-18 06:08 (Asia/Macau)
-**Git HEAD**: `2a42b7d` — docs: 更新開發進度檢查記錄（2026-05-17 06:08）含全項測試通過，K15 未修復
+**上次檢查**: 2026-05-18 06:08 (Asia/Macau)
+**本次檢查**: 2026-05-19 06:08 (Asia/Macau)
+**Git HEAD**: `6f39328` — docs: 更新開發進度檢查記錄（2026-05-18 18:08）含 K19 發現，K15 未觸發
 **DB 狀態**: 26 patients, 17 appointments（測試後已清理）
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`
 
@@ -53,6 +53,16 @@ AIGC:
 - Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ 列表確認消失 ✅（search=TEST-0518-MAX → found:0）→ 已清理
 - **K19 發現**：預約 `checked-in→completed` 轉換時後端回傳「預約不存在」；懷疑 `completeAppointment` 函式使用 `current_status` 欄位查詢，但 appointments 表只有 `status` 欄位；已追加至 Known Issues；其餘已知問題 K01-K18 狀態不變
 - **K01-K18**: 其餘已知問題狀態不變，無其他新問題發現
+
+### 2026-05-19 06:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 26 patients, 17 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0519-MAX, id:e3cd99cd）→ 新增預約 ✅（type:first, date:2026-05-19, time:10:00, id:317dc9c3, status:pending）→ 列表確認出現 ✅（ID 317dc9c3 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: testdev0519max, id:f532f439）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ✅（200 OK，status:completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ 列表確認消失 ✅（search=TEST-0519-MAX → found:0）→ DB 直接確認刪除 ✅（COUNT=0）→ 已清理
+- **K01-K19**: 所有已知問題狀態不變，無新問題發現；K15 本次未觸發（列表正常消失）；K19 本次未觸發（`checked-in→completed` 正常）
+- No new issues found
 
 ### 2026-05-18 06:08 (上次)
 - **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
