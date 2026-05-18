@@ -44,7 +44,17 @@ AIGC:
 - **K01-K18**: 所有已知問題狀態不變，無新問題發現；K15 本次未觸發（列表正常消失）
 - No new issues found
 
-### 2026-05-18 06:08 (本次)
+### 2026-05-18 18:08 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 26 patients, 17 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0518-MAX, id:d81a657d）→ 新增預約 ✅（type:first, date:2026-05-18, time:10:00, id:b0161cb0, status:pending）→ 列表確認出現 ✅（ID b0161cb0 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: testdev0518max, id:2535b366）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ❌（PUT /api/appointments/:id 返回 `{"error":"預約不存在"}`）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ 列表確認消失 ✅（search=TEST-0518-MAX → found:0）→ 已清理
+- **K19 發現**：預約 `checked-in→completed` 轉換時後端回傳「預約不存在」；懷疑 `completeAppointment` 函式使用 `current_status` 欄位查詢，但 appointments 表只有 `status` 欄位；已追加至 Known Issues；其餘已知問題 K01-K18 狀態不變
+- **K01-K18**: 其餘已知問題狀態不變，無其他新問題發現
+
+### 2026-05-18 06:08 (上次)
 - **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
 - DB: 26 patients, 17 appointments
 - Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0517-18-MAX, id:6ad5ea71）→ 新增預約 ✅（type:first, date:2026-05-17, time:10:00, id:1b5e6bbe, status:pending）→ 列表確認出現 ✅（ID 1b5e6bbe 已確認存在於 appointments 列表）
@@ -478,6 +488,7 @@ AIGC:
 | P0 | K15 | 病人刪除 API 回應異常 | DELETE `/api/patients/:id` 回應 `200 {"message":"病人已刪除"}` 但病人仍在列表；DB 確認刪除成功（mysql 直接查詢無該病人），懷疑 GET `/api/patients` 有快取或返回意外格式；需檢查後端刪除後的列表查詢邏輯 | 高優先 |
 | P0 | K17 | 預約創建非確定性持久化 | 預約 POST 有時返回 201 + 有效 UUID，但資料未實際寫入資料庫（mysql 直接查詢無該記錄）；第二次測試可正常創建並查詢到；懷疑後端在異步流程中 transaction 延遲 rollback 或 commit 時序問題；cron 測試已多次重現 | 高優先 |
 | P0 | K18 | 前端創建預約請求格式錯誤 | `POST /api/appointments` 時前端 JSON 格式錯誤：`"patientId":,"doctorId"`（`patientId` 為空值導致 `,` 殘留，且 `doctorId` 丢失）；懷疑某些場景下 `currentConsultation.patient.id` 或 `user?.id` 為空，序列化時產生畸形 JSON；已多次重現於真實用戶操作 | 高優先 |
+| P0 | K19 | 預約 `checked-in→completed` 回傳「預約不存在」| `pending→checked-in` ✅ 成功，但 `checked-in→completed`（PUT /api/appointments/:id）返回 `{"error":"預約不存在"}`；懷疑 `completeAppointment` 使用 `current_status` 欄位查詢，但 appointments 表只有 `status` 欄位（無 `current_status`）；2026-05-18 18:08 首次發現 | 高優先 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
