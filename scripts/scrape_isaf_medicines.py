@@ -414,16 +414,20 @@ def run(limit=None):
     errors = 0
     start_time = time.time()
 
-    print(f"\n開始抓取 {total} 筆記錄...")
+    tenth = total // 10  # 每 1/10 的記錄數
+    next_milestone = tenth  # 下一個進度里程碑（10%）
+    print(f"\n開始抓取 {total} 筆記錄（每完成 10% 報告一次）...")
     print("-" * 60)
 
     for i, (rid, searched_name) in enumerate(records):
-        if i > 0 and i % 100 == 0:
+        if i >= next_milestone:
             elapsed = time.time() - start_time
             rate = i / elapsed if elapsed > 0 else 1
             eta = (total - i) / rate / 60
-            print(f"  進度: {i}/{total} ({i*100/total:.1f}%) | "
+            pct = i * 100 // total
+            print(f"  進度: {i}/{total} ({pct}%) | "
                   f"速率: {rate:.1f}/s | 剩餘: {eta:.0f}分 | 錯誤: {errors}")
+            next_milestone += tenth
 
         option_texts = get_option_texts(rid)
         row = fetch_detail(rid, option_texts)
