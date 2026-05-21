@@ -749,6 +749,142 @@ AIGC:
 | description | varchar(255) | YES | | | 說明 |
 | updated_at | timestamp | YES | | CURRENT_TIMESTAMP | 更新時間 |
 
+## 2. 外部數據文件 (External Data Files)
+
+> 本系統使用澳門 ISAF 藥物資料及 ICD-10 疾病分類作為外部數據參考。
+> ⚠️ 注意：ISAF 藥物數據目前以 CSV/JSON 檔案形式存在，尚未遷移至 MySQL `medications` 資料表。
+> 現有 `medications` MySQL 表仍為舊有 seed 數據（204 筆，6 欄位結構），與 ISAF 數據（9,089 筆，26 欄位）結構差異較大，待 13.14 完成後統一。
+
+---
+
+### 2.1 ISAF 澳門藥物資料（爬蟲）
+
+**爬蟲腳本：**
+```
+scripts/scrape_isaf_medicines.py
+```
+
+**爬蟲輸出檔案：**
+| 檔案 | 路徑 | 說明 |
+|------|------|------|
+| CSV | `data/isaf_medicines.csv` | 藥物數據（9,089 筆，26 欄位） |
+| JSON | `data/isaf_medicines.json` | 藥物數據 JSON 格式 |
+| PDF | `data/isaf_medicines_preview.pdf` | 藥物列表 PDF 預覽（每頁 50 筆記錄） |
+
+**資料轉換工具：**
+| 腳本 | 說明 |
+|------|------|
+| `scripts/csv_to_json.py` | CSV → JSON |
+| `scripts/csv_to_pdf.py` | CSV → PDF |
+
+**ISAF CSV 欄位結構（26 欄）：**
+```
+1.  mednbr                      — 藥物編號
+2.  product_name_zh              — 產品名稱（中文）
+3.  product_name_pt              — 產品名稱（葡文）
+4.  product_name_en              — 產品名稱（英文）
+5.  pharmaceutical_form_zh      — 藥劑形式（中文）
+6.  pharmaceutical_form_pt      — 藥劑形式（葡文）
+7.  pharmaceutical_form_en      — 藥劑形式（英文）
+8.  route_of_administration_zh  — 用藥途徑（中文）
+9.  route_of_administration_pt  — 用藥途徑（葡文）
+10. route_of_administration_en  — 用藥途徑（英文）
+11. active_ingredients_zh        — 活性成份（中文，多個以 ||| 分隔）
+12. active_ingredients_pt        — 活性成份（葡文）
+13. active_ingredients_en        — 活性成份（英文）
+14. legal_classification_zh      — 法律分類（中文）
+15. legal_classification_pt      — 法律分類（葡文）
+16. legal_classification_en      — 法律分類（英文）
+17. atc_classification_zh        — ATC 分類（中文）
+18. atc_classification_pt        — ATC 分類（葡文）
+19. atc_classification_en        — ATC 分類（英文）
+20. manufacturer_zh              — 製造商（中文）
+21. manufacturer_pt              — 製造商（葡文）
+22. manufacturer_en              — 製造商（英文）
+23. distributor_code              — 分銷商代碼
+24. distributor_zh               — 分銷商（中文）
+25. distributor_pt               — 分銷商（葡文）
+26. distributor_en               — 分銷商（英文）
+```
+
+**爬蟲結果（2026-05-21）：**
+- 成功：7,278 筆（80%）
+- 失敗：1,811 筆（主因：ISAF 網站 DNS/500 錯誤，非程式問題）
+- 耗時：31.1 分鐘
+
+---
+
+### 2.2 ICD-10 疾病分類
+
+**爬蟲程式：**
+```
+scripts/build_icd10_full.py
+```
+- 資料來源：澳門衛生局官方網站（bo.dsaj.gov.mo）
+  - 中文：https://bo.dsaj.gov.mo/bo/ii/2006/30/aviso29lista_cn.asp
+  - 英文：https://bo.dsaj.gov.mo/bo/ii/2006/30/aviso29lista_en.asp
+  - 葡文：https://bo.dsaj.gov.mo/bo/ii/2006/30/aviso29lista_pt.asp
+- 輸出：`data/icd10_disease_full.csv`（七欄：icd10_code, category_zh, category_en, category_pt, name_zh, name_en, name_pt）
+- 使用方式：`python3 scripts/build_icd10_full.py`
+
+**匯入資料庫程式：**
+```
+scripts/import_icd10_to_db.cjs
+```
+- 用途：將 `icd10_disease_full.csv` 匯入 MySQL `icd10_codes` 表
+- 使用方式（從 backend 目錄執行）：`NODE_PATH=./node_modules node ../scripts/import_icd10_to_db.cjs`
+- 策略：Upsert（`INSERT ... ON DUPLICATE KEY UPDATE`）
+- 讀取後端 `.env` 資料庫設定
+
+> （另有 `scripts/import_icd10_to_db.py` 為純 Python 版本，適用於系統無 Node.js 環境的情況）
+
+**ICD-10 CSV 原始資料檔案：**
+```
+data/icd10_disease_full.csv
+```
+
+**icd10_codes 資料表結構（8 欄）：**
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | varchar(10) | 主鍵 |
+| code | varchar(10) | ICD-10 代碼 |
+| name_tc | varchar(255) | 中文名稱 |
+| name_en | varchar(255) | 英文名稱 |
+| name_pt | varchar(500) | 葡文名稱 |
+| category_tc | varchar(200) | 所屬類別（中文）|
+| category_en | varchar(200) | 所屬類別（英文）|
+| category_pt | varchar(200) | 所屬類別（葡文）|
+
+**API 端點：**
+- `GET /api/lookup/icd10` — 取得所有 ICD-10（可選 category 過濾）
+- `GET /api/lookup/icd10/search?q=` — 搜尋 ICD-10（code、name_tc、name_en、name_pt）
+
+---
+
+### 2.3 medications 資料庫（本地 Seed）
+
+**Seed Script：**
+```
+data/medications/seed-medications.cjs
+```
+- ⚠️ 注意：此為舊有 seed 數據（204 筆），結構（6 欄）與 ISAF 數據（26 欄）不同
+
+**medications 資料表結構（6 欄）：**
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | varchar(36) | UUID 主鍵 |
+| name | varchar(100) | 藥物名稱 |
+| generic_name | varchar(100) | 學名 |
+| dosage | varchar(50) | 劑量 |
+| route | varchar(50) | 給藥途徑 |
+| frequency | varchar(100) | 用法頻率 |
+
+**API 端點：**
+- `GET /api/lookup/medications` — 取得所有藥物
+- `GET /api/lookup/medications/search?q=` — 搜尋藥物（name、generic_name）
+
+---
+
 ## 13. 待開發功能 (Future Development Roadmap)
 
 > 優先次序：P0 = 立即　P1 = 短期　P2 = 中期
