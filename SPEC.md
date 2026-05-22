@@ -25,14 +25,24 @@ AIGC:
 | 前端服務 | ✅ 運行中 (port 5176) |
 
 **上次檢查**: 2026-05-18 06:08 (Asia/Macau)
-**本次檢查**: 2026-05-19 06:08 (Asia/Macau)
-**Git HEAD**: `6f39328` — docs: 更新開發進度檢查記錄（2026-05-18 18:08）含 K19 發現，K15 未觸發
-**DB 狀態**: 26 patients, 17 appointments（測試後已清理）
+**本次檢查**: 2026-05-22 17:38 (Asia/Macau)
+**Git HEAD**: `4062eb7` — docs: 新增CLAUDE.md項目開發行為準則（12條規則）
+**DB 狀態**: 26 patients, 19 appointments
 **後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`
 
 ---
 
 ## 開發進度檢查記錄 (Dev Check Log)
+
+### 2026-05-22 17:38 (本次)
+- **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
+- DB: 26 patients, 19 appointments
+- Test a) doctor1 → 新增病人 ✅（patient_number: TEST-0522-MAX, id:1a4f3523）→ 新增預約 ✅（type:first, date:2026-05-22, time:10:00, id:138d863c, status:pending）→ 列表確認出現 ✅（ID 138d863c 已確認存在於 appointments 列表）
+- Test b) admin → 新增用戶 ✅（username: testdev0522max, id:559c4cee）→ 確認寫入成功 ✅ → 已清理
+- Test c) 預約狀態更新 → `pending→checked-in` ✅（PUT /api/appointments/:id，200 OK，status:checked-in）→ `checked-in→completed` ✅（200 OK，status:completed）
+- Test d) admin 刪除病人 → ✅ 成功刪除（message:病人已刪除）→ 列表確認消失 ✅（search=TEST-0522-MAX → found:0）→ DB 直接確認刪除 ✅（COUNT=0）→ 已清理
+- **K01-K19**: 所有已知問題狀態不變，無新問題發現；K15 本次未觸發（列表正常消失）
+- No new issues found
 
 ### 2026-05-16 06:08 (本次)
 - **後端運行中** ✅（`/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`）
