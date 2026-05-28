@@ -24,11 +24,12 @@ AIGC:
 | 後端服務 | ✅ 運行中 (port 3000) |
 | 前端服務 | ✅ 運行中 (port 5176) |
 
-**上次檢查**: 2026-05-18 06:08 (Asia/Macau)
-**本次檢查**: 2026-05-22 17:38 (Asia/Macau)
-**Git HEAD**: `4062eb7` — docs: 新增CLAUDE.md項目開發行為準則（12條規則）
+**上次檢查**: 2026-05-28 (Asia/Macau)
+**本次檢查**: 2026-05-28 (Asia/Macau) — 代碼審計，新增 K20-K35
+**Git HEAD**: `e8e9bde` — chore: replace CLAUDE.md with andrej-karpathy-skills version
 **DB 狀態**: 26 patients, 19 appointments
-**後端**: ✅ 運行中 (port 3000) — `/api/health` 回應 `{"status":"ok","message":"EMR System API is running"}`
+**後端**: ✅ 運行中 (port 3000)
+**已知問題**: 未解決 K02-K08/K10/K12-K15/K17-K19/K20-K35（共 26 項），已解決 K01/K09/K11/K16（R01-R10）
 
 ---
 
@@ -48,26 +49,59 @@ AIGC:
 
 ## 0.1 待解決問題 (Known Issues)
 
+> ⚠️ **K20-K35 為 2026-05-28 代碼審計新增問題**，按模組分組。
+> 預計在核心資料表重構（Phase 1）中一併處理 K02/K10/K12-K15/K17-K19/K23-K26。
+
+### 🔒 安全問題 (Security)
+
 | 優先 | ID | 模組 | 問題描述 | 備註 |
 |------|----|------|---------|------|
-| ✅ P0 | K01 | ~~前端保安~~ | ~~Doctor 可刪除任意病人，需修正後端權限或前端限制~~ → 已解決：後端 requirePermission 攔截 + 前端 admin 可見刪除鈕 | 高優先 |
+| P2 | K08 | 身份驗證 | 只支援帳號密碼登入，無雙重驗證（2FA）| 低優先 |
+| P0 | K20 | 後端保安 | **JWT 密鑰硬編碼 fallback**：`auth.js` 中 `JWT_SECRET = process.env.JWT_SECRET \|\| 'emr_system_secret_key_2024'`，後端 `.env` 未定義 `JWT_SECRET`，所有環境使用可預測密鑰；醫療系統 token 可被偽造 | 需在 `.env` 加入隨機密鑰 + 移除 fallback |
+| P0 | K21 | 後端保安 | **CORS 完全開放**：`server.js` 使用 `app.use(cors())` 無 origin 限制，任何域名可發起跨域請求存取醫療數據 | 需限制為前端域名 |
+| P1 | K22 | 前端保安 | **Token 僅 base64 混淆**：`AuthContext.tsx` 用 `btoa(token)` 存 localStorage，base64 非加密，任何 JS 均可解碼；應改用 httpOnly cookie 或加密存儲 | 與 K08（2FA）同屬認證體系問題 |
+
+### 🗄️ 資料庫 / API 問題 (Database & API)
+
+| 優先 | ID | 模組 | 問題描述 | 備註 |
+|------|----|------|---------|------|
 | P0 | K02 | 後端效能 | slow_query_log 未開啟，大量查詢無優化；建議建立必要索引 | 高優先 |
+| P0 | K10 | 前端病人頁面 | 病人資料庫結構已更新（新增 8 個欄位），前端表單及列表頁尚未配合重構 | K24 為根因分析 |
+| P0 | K12 | 預約 POST API | `patient_id` 位置不一致：後端讀 `req.body.patient_id`，cron 測試用 query param；真實前端是否有相同問題待確認 | 高優先 |
+| P0 | K13 | 預約列表 API | POST `/api/appointments` 作為列表查詢時（用 `date` filter），後端回應 400「診症日期為必填項」；GET 無參數正常 | 高優先 |
+| P0 | K14 | 用戶列表 API | GET `/api/users` 回應為 array 但以數字 index 作為 key（非 `users` 陣列包裝），client 端 `.users` 存取失敗 | K35 為全域問題 |
+| P0 | K15 | 病人刪除 API | DELETE 回應 200 但病人仍在列表；DB 確認刪除成功，懷疑 GET 有快取或返回意外格式 | 高優先 |
+| P0 | K17 | 預約持久化 | POST 有時返回 201 + UUID，但資料未實際寫入 DB；懷疑 transaction 時序問題 | K26 為根因分析 |
+| P0 | K18 | 前端預約格式 | `POST /api/appointments` 前端 JSON 格式錯誤：`"patientId":,"doctorId"` 為空值導致畸形 JSON | 高優先 |
+| P0 | K19 | 預約狀態更新 | `checked-in→completed` 回傳「預約不存在」；懷疑 `completeAppointment` 查詢欄位名錯誤 | 高優先 |
+| P0 | K23 | DB Schema | **medications 表 SQL 語法錯誤**：`init.sql:217-226` 缺少 `CREATE TABLE IF NOT EXISTS` | 重構時一併修復 |
+| P0 | K24 | 前後端脫節 | **病人欄位嚴重脫節**：DB 有 8 個新欄位但 controller + 表單完全未處理 | K10 根因，重構時一併修復 |
+| P0 | K25 | DB 效能 | **N+1 查詢問題**：`getWaitingList` 對每個預約單獨查 alerts | 與 K02 相關 |
+| P0 | K26 | 後端可靠性 | **預約持久化根因**：`createAppointment` 無顯式 transaction | K17 根因分析 |
+| P2 | K35 | API 規範 | **API 回應格式全域不一致**：GET users 裸 array、GET patients `{patients, pagination}`、DELETE `{message}` | K14 為子集 |
+
+### 🏗️ 架構 / 效能問題 (Architecture & Performance)
+
+| 優先 | ID | 模組 | 問題描述 | 備註 |
+|------|----|------|---------|------|
 | P1 | K03 | 前端日誌 | 日誌頁面及功能不完整 | 中優先 |
-| P1 | K04 | 前端效能 | 前端過度請求問題，懶加載未全面實施 | 中優先 |
+| P1 | K04 | 前端效能 | 前端過度請求問題，懶加載未全面實施 | K27/K28 為根因 |
 | P1 | K05 | 病人就診 | PatientDetail 未顯示同一病人前一次 SOAP 就診記錄 | 中優先 |
 | P1 | K06 | 前端審核 | 刪改操作未完整記錄操作人員身份 | 中優先 |
-| P1 | K07 | 前端效能 | 全部模組一口氣請求，影響首頁載入速度 | 中優先 |
-| P2 | K08 | 身份驗證 | 只支援帳號密碼登入，無雙重驗證（2FA）| 低優先 |
-| ✅ P1 | K09 | 預約 API | 錯誤訊息誤導：「病人編號和診症日期為必填項」但實際是 `type` 欄位 enum 不接受 `new/follow-up`，後端 log 可見 `Data truncated for column 'type'`；前端傳 `type:new` 或 `type:follow-up` 均失敗，需用 `first/followup/urgent` | 中優先 |
-| P0 | K10 | 前端病人頁面 | 病人資料庫結構已更新（新增 emergency_contact_phone2、contact_address、emergency_contact_address、name_en、id_type、gold_card_number、insurance_type、insurance_number 等欄位），前端表單及列表頁尚未配合重構 | 高優先 |
-| ✅ P0 | K11 | 預約 API 欄位不一致 | → 已解決：`appointments.type` 預設值改為 `followup`，前後端統一使用 `date` 欄位（`681b521`）| 高優先，影響新建預約功能 |
-| P0 | K12 | 預約 POST API `patient_id` 位置不一致 | 後端 `createAppointment` 讀取 `req.body.patient_id`（需在 JSON body），但 cron 測試長期使用 `?patient_id=X`（query param），導致 400「病人編號為必填項」；API 本體正常（body 方式 ✅），需修正 cron 測試指引；真實前端是否有相同問題待確認 | 高優先 |
-| P0 | K13 | 預約列表 API POST body 方式失效 | POST `/api/appointments` 作為列表查詢時（用 `date` filter），後端回應 400「診症日期為必填項」；懷疑後端 GET handler 對某些路徑有特殊處理，POST body 方式不符合預期；GET /api/appointments（無參數）✅ 正常 | 高優先 |
-| P0 | K14 | 用戶列表 API 回應格式異常 | GET `/api/users` 回應為 array 但以數字 index 作為 key（非 `users` 陣列包裝），導致 client 端 `.users` 存取失敗；真實前端是否受影響待確認 | 高優先 |
-| P0 | K15 | 病人刪除 API 回應異常 | DELETE `/api/patients/:id` 回應 `200 {"message":"病人已刪除"}` 但病人仍在列表；DB 確認刪除成功（mysql 直接查詢無該病人），懷疑 GET `/api/patients` 有快取或返回意外格式；需檢查後端刪除後的列表查詢邏輯 | 高優先 |
-| P0 | K17 | 預約創建非確定性持久化 | 預約 POST 有時返回 201 + 有效 UUID，但資料未實際寫入資料庫（mysql 直接查詢無該記錄）；第二次測試可正常創建並查詢到；懷疑後端在異步流程中 transaction 延遲 rollback 或 commit 時序問題；cron 測試已多次重現 | 高優先 |
-| P0 | K18 | 前端創建預約請求格式錯誤 | `POST /api/appointments` 時前端 JSON 格式錯誤：`"patientId":,"doctorId"`（`patientId` 為空值導致 `,` 殘留，且 `doctorId` 丢失）；懷疑某些場景下 `currentConsultation.patient.id` 或 `user?.id` 為空，序列化時產生畸形 JSON；已多次重現於真實用戶操作 | 高優先 |
-| P0 | K19 | 預約 `checked-in→completed` 回傳「預約不存在」| `pending→checked-in` ✅ 成功，但 `checked-in→completed`（PUT /api/appointments/:id）返回 `{"error":"預約不存在"}`；懷疑 `completeAppointment` 使用 `current_status` 欄位查詢，但 appointments 表只有 `status` 欄位（無 `current_status`）；2026-05-18 18:08 首次發現 | 高優先 |
+| P1 | K07 | 前端效能 | 全部模組一口氣請求，影響首頁載入速度 | K27/K28 為根因 |
+| P1 | K27 | 前端架構 | **Monolithic DataContext**：568 行，login 時一次加載全部數據；應按領域拆分 | K04/K07 根因 |
+| P1 | K28 | 前端效能 | **路由無懶加載**：App.tsx 靜態 import 20+ 組件，單一 chunk 1432 KB | 與 K04/K07 相關 |
+| P1 | K29 | 項目品質 | **零測試覆蓋**：無任何測試文件，核心業務邏輯無自動化驗證 | 建議優先補預約流程測試 |
+| P2 | K30 | 技術棧一致性 | **前後端語言不一致**：後端 JS、前端 TS | 長期改進 |
+
+### ⚙️ 代碼品質 (Code Quality)
+
+| 優先 | ID | 模組 | 問題描述 | 備註 |
+|------|----|------|---------|------|
+| P1 | K31 | 前端邏輯 | **病人編號競態條件**：`PatientForm.tsx` 用 `patients.length + 1` 生成編號 | 應改用後端自動生成 |
+| P2 | K32 | 前端一致性 | **樂觀更新不一致**：部分 CRUD 樂觀更新，部分重新 fetch 全量 | |
+| P2 | K33 | 項目配置 | **playwright 錯放 dependencies** | 移至 devDependencies |
+| P2 | K34 | 部署配置 | **前端 .env 硬編碼內網 IP** `192.168.19.143` | 改用相對路徑或域名 |
 
 ## 0.2 已完成問題 (Resolved Issues)
 
