@@ -1,6 +1,6 @@
 -- =============================================================================
 -- ISAF 藥物資料庫建表腳本
--- 版本：v2.0
+-- 版本：v3.0
 -- 日期：2026-05-31
 -- 資料來源：澳門衛生局 ISAF 藥物資料（data/isaf_medicines.json）
 -- 說明：建立藥物主資料表及關聯的活性成分、ATC 分類表
@@ -17,7 +17,8 @@ PRAGMA foreign_keys = ON;
 -- 欄位名稱與原有 medications 表（SPEC 1.11）相容：
 --   id, name, generic_name, dosage, route, frequency, created_at
 -- 新增欄位：
---   name_pt, remarks, mednbr, form_*, classification_*, manufacturer_*, distributor_*
+--   name_pt, route_en, route_pt, remarks
+--   mednbr, form_*, classification_*, manufacturer_*, distributor_*
 
 CREATE TABLE IF NOT EXISTS isaf_drugs (
     id                  VARCHAR(36) PRIMARY KEY,                       -- UUID 主鍵（與原表一致）
@@ -27,11 +28,13 @@ CREATE TABLE IF NOT EXISTS isaf_drugs (
     name                VARCHAR(100) NOT NULL,                         -- 藥物名稱（中文）= ISAF product_name.zh
     generic_name        VARCHAR(100),                                  -- 學名（英文）= ISAF product_name.en
     dosage              VARCHAR(50),                                   -- 劑量（ISAF 缺失，保留供日後補充）
-    route               VARCHAR(50),                                   -- 給藥途徑 = ISAF route_of_administration.zh
+    route               VARCHAR(50),                                   -- 給藥途徑（中文）= ISAF route_of_administration.zh
     frequency           VARCHAR(100),                                  -- 用法頻率（ISAF 缺失，保留供日後補充）
 
     -- === 新增欄位 ===
     name_pt             VARCHAR(100),                                  -- 藥物名稱（葡文）= ISAF product_name.pt
+    route_en            VARCHAR(50),                                   -- 給藥途徑（英文）= ISAF route_of_administration.en
+    route_pt            VARCHAR(50),                                   -- 給藥途徑（葡文）= ISAF route_of_administration.pt
     remarks             TEXT,                                          -- 備註（服藥指引、禁忌、注意事項等）
 
     -- ISAF 劑型（三語）
@@ -39,10 +42,10 @@ CREATE TABLE IF NOT EXISTS isaf_drugs (
     form_pt             TEXT,                                          -- 劑型（葡文）
     form_en             TEXT,                                          -- 劑型（英文）
 
-    -- ISAF 法律分類（三語）
-    classification_zh   TEXT,                                          -- 法律分類（中文）
-    classification_pt   TEXT,                                          -- 法律分類（葡文）
-    classification_en   TEXT,                                          -- 法律分類（英文）
+    -- ISAF 法定分類（三語）
+    classification_zh   TEXT,                                          -- 法定分類（中文）
+    classification_en   TEXT,                                          -- 法定分類（英文）
+    classification_pt   TEXT,                                          -- 法定分類（葡文）
 
     -- ISAF 製造商（三語）
     manufacturer_zh     TEXT,                                          -- 製造商（中文）
@@ -62,13 +65,11 @@ CREATE TABLE IF NOT EXISTS isaf_drugs (
     CONSTRAINT uk_mednbr UNIQUE (mednbr)
 );
 
--- 索引（與原有 medications 表相容）
-CREATE INDEX IF NOT EXISTS idx_drug_name            ON isaf_drugs(name);
-CREATE INDEX IF NOT EXISTS idx_drug_generic_name    ON ISaf_drugs(generic_name);
-CREATE INDEX IF NOT EXISTS idx_drug_route           ON isaf_drugs(route);
-CREATE INDEX IF NOT EXISTS idx_drug_classification  ON isaf_drugs(classification_zh);
-CREATE INDEX IF NOT EXISTS idx_drug_form_zh         ON isaf_drugs(form_zh);
-CREATE INDEX IF NOT EXISTS idx_drug_manufacturer_zh ON isaf_drugs(manufacturer_zh);
+-- 索引（搜尋欄位以英文為主）
+CREATE INDEX IF NOT EXISTS idx_drug_name               ON isaf_drugs(name);
+CREATE INDEX IF NOT EXISTS idx_drug_generic_name       ON isaf_drugs(generic_name);
+CREATE INDEX IF NOT EXISTS idx_drug_route_en           ON isaf_drugs(route_en);
+CREATE INDEX IF NOT EXISTS idx_drug_classification_en  ON isaf_drugs(classification_en);
 
 -- =============================================================================
 -- 2. isaf_drug_ingredients — 活性成分表
@@ -88,9 +89,8 @@ CREATE TABLE IF NOT EXISTS isaf_drug_ingredients (
         FOREIGN KEY (drug_id) REFERENCES isaf_drugs(id) ON DELETE CASCADE
 );
 
--- 索引
+-- 索引（以英文成分名搜尋）
 CREATE INDEX IF NOT EXISTS idx_ingredient_drug     ON isaf_drug_ingredients(drug_id);
-CREATE INDEX IF NOT EXISTS idx_ingredient_name_zh  ON isaf_drug_ingredients(name_zh);
 CREATE INDEX IF NOT EXISTS idx_ingredient_name_en  ON isaf_drug_ingredients(name_en);
 
 -- =============================================================================
@@ -115,7 +115,6 @@ CREATE TABLE IF NOT EXISTS isaf_drug_atc_codes (
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_atc_drug    ON isaf_drug_atc_codes(drug_id);
 CREATE INDEX IF NOT EXISTS idx_atc_code    ON isaf_drug_atc_codes(atc_code);
-CREATE INDEX IF NOT EXISTS idx_atc_name_zh ON isaf_drug_atc_codes(name_zh);
 
 -- =============================================================================
 -- 完成提示
@@ -123,10 +122,10 @@ CREATE INDEX IF NOT EXISTS idx_atc_name_zh ON isaf_drug_atc_codes(name_zh);
 -- 表建立完成。可使用以下語句驗證：
 --   SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'isaf_%';
 --
--- 預計資料量：
---   isaf_drugs:             ~9,089 筆
---   isaf_drug_ingredients:  ~13,600 筆（平均 1.5 筆/藥物）
---   isaf_drug_atc_codes:    ~10,000 筆（平均 1.1 筆/藥物）
+-- 預計資料量（匯入 ISAF 資料後）：
+--   isaf_drugs:             ~7,278 筆
+--   isaf_drug_ingredients:  ~10,900 筆
+--   isaf_drug_atc_codes:    ~8,000 筆
 --
 -- 欄位相容性：
 --   原 medications 表所有欄位（id, name, generic_name, dosage, route, frequency, created_at）
