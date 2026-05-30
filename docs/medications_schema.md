@@ -1,6 +1,6 @@
-# ISAF 藥物資料庫表結構設計
+# 藥物資料庫表結構設計
 
-> 版本：v3.0
+> 版本：v4.0
 > 日期：2026-05-31
 > 作者：Hermes Agent
 > 資料來源：澳門衛生局 ISAF 藥物資料（`data/isaf_medicines.json`）
@@ -9,12 +9,13 @@
 
 ## 1. 概述
 
-本文件記錄醫療管理系統（EMR）中藥物資料表的設計方案。資料結構基於澳門衛生局 ISAF 系統的藥物登記資料，**保留原有 `medications` 表欄位名稱**，並擴展支援三語及完整藥物資訊。
+本文件記錄醫療管理系統（EMR）中藥物資料表的設計方案。資料結構基於澳門衛生局 ISAF 系統的藥物登記資料，**保留原有 `medications` 表名稱及欄位名稱**，並擴展支援三語及完整藥物資訊。
 
 ### 1.1 設計原則
 
+- **保留原表名**：主表沿用 `medications`，子表命名為 `medication_ingredients`、`medication_atc_codes`
 - **保留原有欄位名稱**：`name`、`generic_name`、`dosage`、`route`、`frequency` 保持不變
-- **與 SPEC 1.11 對齊**：新表為 `medications` 表的超集，未來可直接取代
+- **與 SPEC 1.11 對齊**：新表為原 `medications` 表的擴展版本，可直接取代舊表
 - **三語支援**：中文（name）、英文（generic_name）、葡文（name_pt）
 - **正規化**：活性成分和 ATC 分類使用獨立子表
 - **相容 SQLite**：不使用 MySQL 特有語法
@@ -68,32 +69,32 @@
 ### 2.1 ER 關係圖
 
 ```
-┌──────────────────────────┐       ┌──────────────────────────┐
-│    isaf_drugs             │       │  isaf_drug_ingredients    │
-│──────────────────────────│       │──────────────────────────│
-│ id (PK, UUID)            │──┐    │ id (PK)                  │
-│ mednbr (UNIQUE)          │  ├───>│ drug_id (FK)             │
-│ name (= product_name_zh) │  │    │ name_zh                  │
-│ generic_name (= en)      │  │    │ name_pt                  │
-│ name_pt (新增)            │  │    │ name_en                  │
-│ dosage (保留)             │  │    │ display_order            │
-│ route (= route_zh)       │  │    └──────────────────────────┘
+┌──────────────────────────┐       ┌────────────────────────────┐
+│    medications           │       │  medication_ingredients     │
+│──────────────────────────│       │────────────────────────────│
+│ id (PK, UUID)            │──┐    │ id (PK)                    │
+│ mednbr (UNIQUE)          │  ├───>│ medication_id (FK)         │
+│ name (= product_name_zh) │  │    │ name_zh                    │
+│ generic_name (= en)      │  │    │ name_pt                    │
+│ name_pt (新增)            │  │    │ name_en                    │
+│ dosage (保留)             │  │    │ display_order              │
+│ route (= route_zh)       │  │    └────────────────────────────┘
 │ route_en (新增)           │  │
-│ route_pt (新增)           │  │    ┌──────────────────────────┐
-│ frequency (保留)          │  │    │  isaf_drug_atc_codes     │
-│ remarks (新增)            │  │    │──────────────────────────│
-│ form_zh/pt/en            │  │    │ id (PK)                  │
-│ classification_zh/pt/en  │  │    │ drug_id (FK)             │
-│ manufacturer_zh/pt/en    │  │    │ atc_code                 │
-│ distributor_code/zh/...  │  └───>│ name_zh/pt/en            │
-│ created_at               │       │ display_order            │
-│ updated_at               │       └──────────────────────────┘
+│ route_pt (新增)           │  │    ┌────────────────────────────┐
+│ frequency (保留)          │  │    │  medication_atc_codes      │
+│ remarks (新增)            │  │    │────────────────────────────│
+│ form_zh/pt/en            │  │    │ id (PK)                    │
+│ classification_zh/pt/en  │  │    │ medication_id (FK)         │
+│ manufacturer_zh/pt/en    │  │    │ atc_code                   │
+│ distributor_code/zh/...  │  └───>│ name_zh/pt/en              │
+│ created_at               │       │ display_order              │
+│ updated_at               │       └────────────────────────────┘
 └──────────────────────────┘
 ```
 
-### 2.2 `isaf_drugs` 主表
+### 2.2 `medications` 主表
 
-藥物基本資料，每筆藥物對應一行。**欄位名稱與原有 `medications` 表相容**。
+藥物基本資料，每筆藥物對應一行。**表名及欄位名稱與原有 `medications` 表相容**。
 
 | 欄位 | 類型 | 必填 | 說明 | 對應原欄位 |
 |------|------|:----:|------|:----------:|
@@ -126,36 +127,36 @@
 
 **索引**：
 - `uk_mednbr` — `mednbr` 唯一索引
-- `idx_drug_name` — `name`（中文名搜尋）
-- `idx_drug_generic_name` — `generic_name`（英文名搜尋）
-- `idx_drug_route_en` — `route_en`（英文給藥途徑篩選）
-- `idx_drug_classification_en` — `classification_en`（英文法定分類篩選）
+- `idx_med_name` — `name`（中文名搜尋）
+- `idx_med_generic_name` — `generic_name`（英文名搜尋）
+- `idx_med_route_en` — `route_en`（英文給藥途徑篩選）
+- `idx_med_classification_en` — `classification_en`（英文法定分類篩選）
 
-### 2.3 `isaf_drug_ingredients` 活性成分表
+### 2.3 `medication_ingredients` 活性成分表
 
 每種藥物可含多種活性成分（一對多關係）。
 
 | 欄位 | 類型 | 必填 | 說明 |
 |------|------|:----:|------|
 | `id` | INTEGER | ✓ | 自增主鍵 |
-| `drug_id` | VARCHAR(36) | ✓ | 外鍵 → `isaf_drugs.id` |
+| `medication_id` | VARCHAR(36) | ✓ | 外鍵 → `medications.id` |
 | `name_zh` | TEXT | | 活性成分名稱（中文） |
 | `name_pt` | TEXT | | 活性成分名稱（葡文） |
 | `name_en` | TEXT | | 活性成分名稱（英文） |
 | `display_order` | INTEGER | ✓ | 顯示順序（預設 0） |
 
 **索引**：
-- `idx_ingredient_drug` — `drug_id`
+- `idx_ingredient_med` — `medication_id`
 - `idx_ingredient_name_en` — 英文成分名搜尋
 
-### 2.4 `isaf_drug_atc_codes` ATC 分類表
+### 2.4 `medication_atc_codes` ATC 分類表
 
 每種藥物可對應多個 ATC 分類代碼（一對多關係）。
 
 | 欄位 | 類型 | 必填 | 說明 |
 |------|------|:----:|------|
 | `id` | INTEGER | ✓ | 自增主鍵 |
-| `drug_id` | VARCHAR(36) | ✓ | 外鍵 → `isaf_drugs.id` |
+| `medication_id` | VARCHAR(36) | ✓ | 外鍵 → `medications.id` |
 | `atc_code` | TEXT | | ATC 代碼（如 R01B） |
 | `name_zh` | TEXT | | 分類名稱（中文） |
 | `name_pt` | TEXT | | 分類名稱（葡文） |
@@ -163,7 +164,7 @@
 | `display_order` | INTEGER | ✓ | 顯示順序（預設 0） |
 
 **索引**：
-- `idx_atc_drug` — `drug_id`
+- `idx_atc_med` — `medication_id`
 - `idx_atc_code` — `atc_code` 搜尋
 
 ---
@@ -172,10 +173,10 @@
 
 ### 3.1 欄位相容性
 
-新表 `isaf_drugs` 是原有 `medications` 表的**超集**：
+新 `medications` 表是原有表的**擴展版本**，所有原有欄位完全保留：
 
-| 原 medications 欄位 | isaf_drugs 對應 | 備註 |
-|---------------------|-----------------|------|
+| 原 medications 欄位 | 新表對應 | 備註 |
+|---------------------|----------|------|
 | `id` | `id` | 同為 VARCHAR(36) UUID |
 | `name` | `name` | 保留原名稱 |
 | `generic_name` | `generic_name` | 保留原名稱 |
@@ -186,20 +187,57 @@
 
 ### 3.2 API 端點相容
 
-現有 API 端點可直接指向新表：
+現有 API 端點**無需修改**，因為表名仍為 `medications`：
 
-- `GET /api/lookup/medications` — 查詢 `isaf_drugs`（返回 `name`, `generic_name` 等）
+- `GET /api/lookup/medications` — 查詢 `medications`（返回 `name`, `generic_name` 等）
 - `GET /api/lookup/medications/search?q=` — 搜尋 `name`、`generic_name`
 
 ### 3.3 未來取代計畫
 
-1. 確認新表結構無誤後，將 `isaf_drugs` 改名為 `medications`（或保留原名並更新 API 指向）
-2. **刪除舊 `medications` 表的 204 筆 seed 資料**（不再遷移，直接以 ISAF 資料取代）
-3. 更新 `prescription_medications` 表的外鍵引用
+**直接刪除舊表 → 重新建表 → 注入新資料**，流程如下：
+
+```sql
+-- 1. 刪除舊表（連同子表，因外鍵級聯）
+DROP TABLE IF EXISTS medication_atc_codes;
+DROP TABLE IF EXISTS medication_ingredients;
+DROP TABLE IF EXISTS medications;
+
+-- 2. 重新建表
+-- 執行 create_medications.sql
+
+-- 3. 注入新的 ISAF 藥物資料
+-- 執行 import_isaf_to_db.py
+```
+
+> **設計說明**：由於欄位完全相容且無衝突，直接刪除舊表重建是最乾淨的做法。
+> 舊有的 204 筆 seed 資料將被 ISAF 完整資料集取代，無需遷移。
 
 ---
 
-## 4. 法定分類對照
+## 4. 定期更新策略
+
+### 4.1 更新流程
+
+醫生開藥時應使用**有效的藥物資料**進行處方，因此定期爬取最新 ISAF 資料並更新資料庫：
+
+1. 執行 ISAF 爬蟲，取得最新藥物資料（`data/isaf_medicines.json`）
+2. 清除舊的藥物資料（`DELETE FROM medications`，子表因級聯自動清除）
+3. 注入新的有效藥物資料
+4. 驗證匯入結果
+
+> **設計說明**：無需保留已失效的藥物資料。過期藥物應從處方選項中移除，
+> 但處方歷史記錄（`prescription_medications`）中的藥物名稱會保留為文字欄位，
+> 不受藥物資料庫更新影響。
+
+### 4.2 注意事項
+
+- 資料量會隨每次爬取而變動，以下數字僅為當前預估
+- 爬蟲成功率受 ISAF 網站狀態影響（成功率約 80%）
+- 建議避開澳門政府網站維護時段（12:00-13:00）進行爬取
+
+---
+
+## 5. 法定分類對照
 
 | 代碼 | 中文 | 葡文 | 英文 |
 |------|------|------|------|
@@ -209,33 +247,33 @@
 
 ---
 
-## 5. 將 ISAF 資料注入資料表
+## 6. 將 ISAF 資料注入資料表
 
-### 5.1 前置條件
+### 6.1 前置條件
 
 1. 確認 SQLite 資料庫已建立（路徑：`backend/database/emr.db`）
 2. 確認 ISAF 資料檔存在（路徑：`data/isaf_medicines.json`）
 
-### 5.2 步驟一：建立資料表
+### 6.2 步驟一：建立資料表
 
 ```bash
 cd /home/gem-openclaw/project/simple-medical-system
-sqlite3 backend/database/emr.db < backend/src/database/create_isaf_drugs.sql
+sqlite3 backend/database/emr.db < backend/src/database/create_medications.sql
 ```
 
 驗證：
 ```bash
-sqlite3 backend/database/emr.db "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'isaf_%';"
+sqlite3 backend/database/emr.db "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'medication%';"
 ```
 
 應輸出：
 ```
-isaf_drugs
-isaf_drug_ingredients
-isaf_drug_atc_codes
+medications
+medication_ingredients
+medication_atc_codes
 ```
 
-### 5.3 步驟二：匯入藥物資料
+### 6.3 步驟二：匯入藥物資料
 
 使用 `scripts/import_isaf_to_db.py`（需建立此腳本）將 JSON 資料匯入資料表：
 
@@ -261,36 +299,39 @@ python3 scripts/import_isaf_to_db.py
      - `manufacturer.*` → `manufacturer_zh/pt/en`
      - `distributor.*` → `distributor_code/zh/pt/en`
    - `dosage`、`frequency`、`remarks` 暫留空
-3. 寫入 `isaf_drugs` 主表
-4. 展開 `active_ingredients` 陣列 → 寫入 `isaf_drug_ingredients`
-5. 展開 `atc_classifications` 陣列 → 寫入 `isaf_drug_atc_codes`（同時解析 ATC 代碼）
+3. 寫入 `medications` 主表
+4. 展開 `active_ingredients` 陣列 → 寫入 `medication_ingredients`
+5. 展開 `atc_classifications` 陣列 → 寫入 `medication_atc_codes`（同時解析 ATC 代碼）
 
-### 5.4 步驟三：驗證匯入結果
+### 6.4 步驟三：驗證匯入結果
 
 ```bash
-sqlite3 backend/database/emr.db "SELECT COUNT(*) FROM isaf_drugs;"
-sqlite3 backend/database/emr.db "SELECT COUNT(*) FROM isaf_drug_ingredients;"
-sqlite3 backend/database/emr.db "SELECT COUNT(*) FROM isaf_drug_atc_codes;"
+sqlite3 backend/database/emr.db "SELECT COUNT(*) FROM medications;"
+sqlite3 backend/database/emr.db "SELECT COUNT(*) FROM medication_ingredients;"
+sqlite3 backend/database/emr.db "SELECT COUNT(*) FROM medication_atc_codes;"
 ```
 
-預期數量：
-| 表 | 預計筆數 |
+> **注意**：以下數量僅為當前預估，實際數量視爬取結果而定。
+
+| 表 | 預估筆數 |
 |----|----------|
-| isaf_drugs | ~7,278（成功率 80%） |
-| isaf_drug_ingredients | ~10,900 |
-| isaf_drug_atc_codes | ~8,000 |
+| medications | ~7,000+ |
+| medication_ingredients | ~10,000+ |
+| medication_atc_codes | ~8,000+ |
 
-### 5.5 步驟四：更新 API 指向
+### 6.5 步驟四：更新 API 指向
 
-修改 `backend/src/controllers/lookupController.js`，將藥物查詢從舊 `medications` 表指向 `isaf_drugs` 表。
+由於表名仍為 `medications`，現有 API 端點**無需修改**即可使用。
 
 ---
 
-## 6. 注意事項
+## 7. 注意事項
 
-1. **欄位名稱保留**：`name`、`generic_name`、`dosage`、`route`、`frequency` 與 SPEC 1.11 一致
-2. **新增欄位**：`name_pt`（葡文名）、`route_en`（英文途徑）、`route_pt`（葡文途徑）、`remarks`（備註）
-3. **索引語言**：給藥途徑及法定分類以英文欄位建索引，活性成分以英文名搜尋
-4. **法定分類**：原稱「法律分類」，統一為「法定分類」
-5. **多值欄位正規化**：活性成分和 ATC 分類使用獨立子表
-6. **級聯刪除**：刪除藥物時自動清除關聯記錄
+1. **表名保留**：主表沿用 `medications`，子表以 `medication_` 為前綴
+2. **欄位名稱保留**：`name`、`generic_name`、`dosage`、`route`、`frequency` 與 SPEC 1.11 一致
+3. **新增欄位**：`name_pt`（葡文名）、`route_en`（英文途徑）、`route_pt`（葡文途徑）、`remarks`（備註）
+4. **索引語言**：給藥途徑及法定分類以英文欄位建索引，活性成分以英文名搜尋
+5. **法定分類**：統一稱為「法定分類」
+6. **多值欄位正規化**：活性成分和 ATC 分類使用獨立子表
+7. **級聯刪除**：刪除藥物時自動清除關聯記錄
+8. **處方歷史不受影響**：`prescription_medications.name` 為文字欄位，藥物資料庫更新不會影響歷史處方記錄
